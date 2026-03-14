@@ -862,6 +862,28 @@
     line-height: 1.6;
   }
 
+
+  /* ─── STATS STATUS BAR ─── */
+  .stats-status {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 10px;
+    padding: 6px 0 2px 0;
+    letter-spacing: 0.04em;
+  }
+  .stats-status-dot {
+    width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+  }
+  .stats-status.ok      .stats-status-dot { background: var(--green); box-shadow: 0 0 5px var(--green); }
+  .stats-status.loading .stats-status-dot { background: var(--amber); animation: pulse 1s infinite; }
+  .stats-status.warn    .stats-status-dot { background: var(--amber); }
+  .stats-status.idle    .stats-status-dot { background: var(--dim); }
+  .stats-status.ok      #statsStatusText  { color: var(--green); }
+  .stats-status.loading #statsStatusText  { color: var(--amber); }
+  .stats-status.warn    #statsStatusText  { color: var(--amber); }
+  .stats-status.idle    #statsStatusText  { color: var(--dim); }
+
 </style>
 </head>
 <body>
@@ -876,6 +898,7 @@
     <div class="pill"><div class="dot"></div>Live Models</div>
     <div class="pill" id="datePill"></div>
   </div>
+  <div style="width:100%;background:rgba(0,0,0,0.4);border-top:1px solid var(--border);padding:4px 32px"><div class="stats-status idle" id="statsStatus"><div class="stats-status-dot" id="statsStatusDot"></div><span id="statsStatusText">Loading live 2025-26 NHL stats...</span></div></div>
 </header>
 
 <div class="main">
@@ -1152,8 +1175,8 @@ const TEAMS = {
   VAN:"Vancouver Canucks",VGK:"Vegas Golden Knights",WSH:"Washington Capitals",WPG:"Winnipeg Jets"
 };
 
-// 2024-25 season approximate stats (GF/GA per game, win%)
-const TEAM_STATS = {
+// Live team stats — loaded from NHL API at runtime, fallback to prior season defaults
+var TEAM_STATS = {
   ANA:{gf:2.6,ga:3.5,wp:.38},BOS:{gf:3.4,ga:2.6,wp:.62},BUF:{gf:3.0,ga:3.2,wp:.47},
   CGY:{gf:2.8,ga:2.9,wp:.50},CAR:{gf:3.3,ga:2.4,wp:.65},CHI:{gf:2.5,ga:3.6,wp:.33},
   COL:{gf:3.3,ga:2.8,wp:.60},CBJ:{gf:2.6,ga:3.3,wp:.40},DAL:{gf:3.2,ga:2.6,wp:.62},
@@ -1166,8 +1189,85 @@ const TEAM_STATS = {
   UTA:{gf:3.1,ga:2.9,wp:.53},VAN:{gf:3.0,ga:2.7,wp:.57},VGK:{gf:3.3,ga:2.7,wp:.61},
   WSH:{gf:3.0,ga:2.8,wp:.56},WPG:{gf:3.2,ga:2.7,wp:.60}
 };
+var STATS_SEASON = 'fallback';
+var statsLoadedAt = null;
 
-const LEAGUE_AVG_GF = 3.0;
+// Fetch live standings from NHL API — no key needed, no CORS issues
+async function loadNHLStats() {
+  var statusEl = document.getElementById('statsStatus');
+  var dotEl    = document.getElementById('statsStatusDot');
+  var textEl   = document.getElementById('statsStatusText');
+
+  // Only refresh once per hour
+  if (statsLoadedAt && (Date.now() - statsLoadedAt) < 3600000) return;
+
+  if (statusEl) statusEl.className = 'stats-status loading';
+  if (textEl)   textEl.textContent  = 'Loading live NHL standings...';
+
+  var urls = [
+    'https://api-web.nhle.com/v1/standings/now',
+    'https://corsproxy.io/?' + encodeURIComponent('https://api-web.nhle.com/v1/standings/now'),
+    'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://api-web.nhle.com/v1/standings/now'),
+  ];
+
+  var data = null;
+  for (var i = 0; i < urls.length; i++) {
+    try {
+      var res = await fetch(urls[i]);
+      if (!res.ok) continue;
+      var json = await res.json();
+      if (json && json.standings && json.standings.length > 0) {
+        data = json;
+        break;
+      }
+    } catch(e) { /* try next */ }
+  }
+
+  if (!data) {
+    if (statusEl) statusEl.className = 'stats-status warn';
+    if (textEl)   textEl.textContent  = '⚠ Using prior-season stats (live fetch failed — models still work)';
+    return;
+  }
+
+  // Parse standings into TEAM_STATS
+  var standings = data.standings;
+  var newStats  = {};
+  var totalGF = 0, totalGA = 0, count = 0;
+
+  for (var s = 0; s < standings.length; s++) {
+    var t  = standings[s];
+    var ab = t.teamAbbrev && t.teamAbbrev.default ? t.teamAbbrev.default : '';
+    var gp = t.gamesPlayed || 1;
+    var gf = (t.goalFor  || 0) / gp;
+    var ga = (t.goalAgainst || 0) / gp;
+    var wp = t.pointPctg || 0;
+    if (ab) {
+      newStats[ab] = { gf: Math.round(gf * 100) / 100, ga: Math.round(ga * 100) / 100, wp: Math.round(wp * 1000) / 1000 };
+      totalGF += gf; totalGA += ga; count++;
+    }
+  }
+
+  if (count > 20) {
+    TEAM_STATS = newStats;
+    LEAGUE_AVG_GF = totalGF / count;
+    statsLoadedAt = Date.now();
+
+    // Extract season label from first record
+    var seasonRaw = standings[0] && standings[0].seasonId ? String(standings[0].seasonId) : '';
+    STATS_SEASON = seasonRaw.length === 8
+      ? seasonRaw.substring(0,4) + '-' + seasonRaw.substring(4)
+      : 'current';
+
+    if (statusEl) statusEl.className = 'stats-status ok';
+    if (textEl)   textEl.textContent  = '✓ Live ' + STATS_SEASON + ' stats loaded — ' + count + ' teams (' + new Date().toLocaleTimeString() + ')';
+    console.log('NHL stats loaded for ' + count + ' teams, season ' + STATS_SEASON);
+  } else {
+    if (statusEl) statusEl.className = 'stats-status warn';
+    if (textEl)   textEl.textContent  = '⚠ Partial data received (' + count + ' teams) — using fallback for missing teams';
+  }
+}
+
+var LEAGUE_AVG_GF = 3.0;
 
 // ═══════════════════════════════════════════════════════════════
 // MATH UTILITIES
@@ -1743,9 +1843,10 @@ function runAnalysis() {
 // INIT
 // ═══════════════════════════════════════════════════════════════
 (function init() {
-  const teamList = Object.keys(TEAMS).sort();
-  const homeEl = document.getElementById('homeTeam');
-  const awayEl = document.getElementById('awayTeam');
+  loadNHLStats();
+  var teamList = Object.keys(TEAMS).sort();
+  var homeEl = document.getElementById('homeTeam');
+  var awayEl = document.getElementById('awayTeam');
 
   teamList.forEach(abbr => {
     homeEl.innerHTML += `<option value="${abbr}">${abbr} — ${TEAMS[abbr]}</option>`;
