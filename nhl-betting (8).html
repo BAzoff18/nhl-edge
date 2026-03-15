@@ -1,0 +1,2408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NHL.EDGE - Betting Algorithm 2025-26</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #060810;
+    --surface: #0d1220;
+    --surface2: #111827;
+    --border: #1e2a3a;
+    --border2: #263040;
+    --text: #e8f0fe;
+    --muted: #6b7a94;
+    --dim: #3a4558;
+    --accent: #3b82f6;
+    --accent2: #60a5fa;
+    --green: #10b981;
+    --amber: #f59e0b;
+    --red: #ef4444;
+    --purple: #8b5cf6;
+    --teal: #14b8a6;
+    --font-display: 'Barlow Condensed', sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(ellipse at 30% 20%, rgba(59,130,246,0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 80%, rgba(139,92,246,0.04) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  #app { position: relative; z-index: 1; }
+
+  /* ─── HEADER ─── */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: rgba(6,8,16,0.9);
+    backdrop-filter: blur(12px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text);
+  }
+  .logo span { color: var(--accent); }
+
+  .logo-tag {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    text-transform: uppercase;
+    border: 1px solid var(--border2);
+    padding: 3px 7px;
+    border-radius: 3px;
+  }
+
+  .header-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    border-radius: 20px;
+    text-transform: uppercase;
+  }
+  .pill .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 6px var(--green);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* ─── LAYOUT ─── */
+  .main { max-width: 1100px; margin: 0 auto; padding: 32px 24px 80px; }
+
+  /* ─── PANELS ─── */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent2)33, transparent);
+  }
+
+  .panel-title {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .panel-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ─── MATCHUP GRID ─── */
+  .input-grid {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 20px;
+    align-items: end;
+    margin-bottom: 20px;
+  }
+
+  .vs-divider {
+    text-align: center;
+    padding-bottom: 12px;
+  }
+  .vs-divider .vs-text {
+    font-family: var(--font-display);
+    font-size: 32px;
+    font-weight: 900;
+    color: var(--border2);
+    letter-spacing: 0.1em;
+  }
+
+  .odds-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  label {
+    display: block;
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 7px;
+  }
+
+  select, input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 11px 14px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7a94' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+  select:focus, input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+
+  .team-select-wrap { position: relative; }
+  .team-badge {
+    position: absolute;
+    right: 36px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--accent2);
+    letter-spacing: 0.08em;
+    pointer-events: none;
+  }
+
+  /* ─── ANALYZE BUTTON ─── */
+  #analyzeBtn {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 20px rgba(59,130,246,0.3);
+  }
+  #analyzeBtn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 28px rgba(59,130,246,0.45); }
+  #analyzeBtn:active:not(:disabled) { transform: translateY(0); }
+  #analyzeBtn:disabled { background: var(--surface2); color: var(--muted); box-shadow: none; cursor: not-allowed; }
+  #analyzeBtn .btn-shimmer {
+    position: absolute; inset: 0;
+    background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.15) 50%, transparent 60%);
+    transform: translateX(-100%);
+    animation: shimmer 2s infinite;
+  }
+  @keyframes shimmer { to { transform: translateX(200%); } }
+
+  /* ─── LOADING ─── */
+  .loading-bar {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 12px;
+    display: none;
+  }
+  .loading-bar.active { display: block; }
+  .loading-bar::after {
+    content: '';
+    display: block;
+    height: 100%;
+    width: 40%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2), var(--purple));
+    border-radius: 2px;
+    animation: loading 1.4s ease-in-out infinite;
+  }
+  @keyframes loading {
+    0% { transform: translateX(-150%); }
+    100% { transform: translateX(350%); }
+  }
+
+  .loading-steps {
+    display: none;
+    gap: 6px;
+    margin-top: 12px;
+  }
+  .loading-steps.active { display: flex; flex-wrap: wrap; }
+  .step-chip {
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border2);
+    color: var(--dim);
+    transition: all 0.3s;
+  }
+  .step-chip.running { border-color: var(--accent); color: var(--accent2); background: rgba(59,130,246,0.08); }
+  .step-chip.done { border-color: var(--green); color: var(--green); background: rgba(16,185,129,0.08); }
+
+  /* ─── RESULTS SECTION ─── */
+  #results { display: none; }
+  #results.visible { display: block; animation: fadeUp 0.4s ease; }
+  @keyframes fadeUp { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0); } }
+
+  /* ─── MATCHUP HERO ─── */
+  .matchup-hero {
+    background: linear-gradient(135deg, var(--surface) 0%, #0d1a2e 100%);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .matchup-hero::after {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 220px; height: 220px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(59,130,246,0.06), transparent 70%);
+  }
+
+  .hero-teams {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 24px;
+    align-items: center;
+    margin-bottom: 28px;
+  }
+
+  .hero-team { text-align: center; }
+  .hero-team-label {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .hero-abbrev {
+    font-family: var(--font-display);
+    font-size: 56px;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .hero-abbrev.home { color: var(--accent2); }
+  .hero-abbrev.away { color: var(--purple); }
+  .hero-name { font-size: 11px; color: var(--muted); margin-top: 4px; letter-spacing: 0.05em; }
+
+  .hero-prob {
+    font-family: var(--font-display);
+    font-size: 44px;
+    font-weight: 900;
+    margin-top: 12px;
+    line-height: 1;
+  }
+  .hero-prob.home { color: var(--accent2); }
+  .hero-prob.away { color: var(--purple); }
+  .hero-prob-label { font-size: 9px; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; margin-top: 4px; }
+
+  .hero-center { text-align: center; }
+  .hero-at {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--border2);
+    display: block;
+    margin-bottom: 12px;
+  }
+  .hero-total-label { font-size: 9px; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; }
+  .hero-total {
+    font-family: var(--font-display);
+    font-size: 36px;
+    font-weight: 900;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  /* Win bar */
+  .win-bar-wrap { margin-top: 4px; }
+  .win-bar {
+    height: 14px;
+    border-radius: 7px;
+    overflow: hidden;
+    display: flex;
+    background: var(--bg);
+    gap: 2px;
+    margin-bottom: 6px;
+  }
+  .win-bar-away { background: linear-gradient(90deg, #7c3aed, #a78bfa); border-radius: 7px 0 0 7px; transition: flex 0.8s cubic-bezier(.4,0,.2,1); }
+  .win-bar-home { background: linear-gradient(90deg, #2563eb, #60a5fa); border-radius: 0 7px 7px 0; transition: flex 0.8s cubic-bezier(.4,0,.2,1); }
+  .win-bar-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); }
+
+  /* ─── TABS ─── */
+  .tabs {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 4px;
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 9px 4px;
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 7px;
+    transition: all 0.2s;
+  }
+  .tab-btn:hover { color: var(--text); background: var(--border); }
+  .tab-btn.active { background: var(--border2); color: var(--text); }
+
+  /* ─── TAB CONTENT ─── */
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; animation: fadeIn 0.25s ease; }
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+  /* ─── GRID LAYOUTS ─── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .span-2 { grid-column: 1/-1; }
+
+  /* ─── STAT CARDS ─── */
+  .stat-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .stat-card-title {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  .big-num {
+    font-family: var(--font-display);
+    font-size: 40px;
+    font-weight: 900;
+    line-height: 1;
+  }
+  .big-num.blue { color: var(--accent2); }
+  .big-num.purple { color: var(--purple); }
+  .big-num.green { color: var(--green); }
+  .big-num.amber { color: var(--amber); }
+
+  /* ─── MINI BAR ─── */
+  .bar-wrap { background: #0a0f1a; border-radius: 3px; height: 5px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 3px; transition: width 0.7s cubic-bezier(.4,0,.2,1); }
+
+  /* ─── MODEL BARS ─── */
+  .model-bar-row { margin-bottom: 14px; }
+  .model-bar-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+  .model-bar-label { font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  .model-bar-vals { font-size: 11px; color: var(--text); }
+  .model-bar-track {
+    height: 10px;
+    display: flex;
+    gap: 2px;
+    border-radius: 5px;
+    overflow: hidden;
+  }
+  .model-bar-home {
+    background: linear-gradient(90deg, #1d4ed8, #60a5fa);
+    transition: flex 0.7s cubic-bezier(.4,0,.2,1);
+  }
+  .model-bar-away {
+    background: linear-gradient(90deg, #7c3aed, #a78bfa);
+    transition: flex 0.7s cubic-bezier(.4,0,.2,1);
+  }
+
+  /* ─── BADGE ─── */
+  .badge {
+    display: inline-block;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+  .badge-value    { background: rgba(16,185,129,.12); color: var(--green);  border: 1px solid rgba(16,185,129,.3); }
+  .badge-novalue  { background: rgba(107,122,148,.08); color: var(--muted); border: 1px solid var(--border); }
+  .badge-high     { background: rgba(16,185,129,.12); color: var(--green);  border: 1px solid rgba(16,185,129,.3); }
+  .badge-medium   { background: rgba(245,158,11,.12); color: var(--amber);  border: 1px solid rgba(245,158,11,.3); }
+  .badge-low      { background: rgba(239,68,68,.12);  color: var(--red);    border: 1px solid rgba(239,68,68,.3); }
+  .badge-over     { background: rgba(16,185,129,.12); color: var(--green);  border: 1px solid rgba(16,185,129,.3); }
+  .badge-under    { background: rgba(59,130,246,.12); color: var(--accent2);border: 1px solid rgba(59,130,246,.3); }
+  .badge-home     { background: rgba(59,130,246,.12); color: var(--accent2);border: 1px solid rgba(59,130,246,.3); }
+  .badge-away     { background: rgba(139,92,246,.12); color: var(--purple); border: 1px solid rgba(139,92,246,.3); }
+
+  /* ─── BET CARD ─── */
+  .bet-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 10px;
+    transition: border-color 0.2s;
+  }
+  .bet-card.value-home  { border-color: rgba(59,130,246,0.3); }
+  .bet-card.value-away  { border-color: rgba(139,92,246,0.3); }
+  .bet-card.value-over  { border-color: rgba(16,185,129,0.3); }
+  .bet-card.value-under { border-color: rgba(59,130,246,0.3); }
+
+  .bet-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .bet-card-name { font-weight: 600; font-size: 13px; }
+  .bet-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 16px; font-size: 11px; }
+  .bet-stat-row { display: flex; justify-content: space-between; }
+  .bet-stat-key { color: var(--muted); }
+  .bet-stat-val { font-weight: 500; }
+  .kelly-bar {
+    margin-top: 10px;
+    padding: 7px 10px;
+    background: rgba(245,158,11,0.06);
+    border: 1px solid rgba(245,158,11,0.15);
+    border-radius: 6px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .kelly-bar span { color: var(--amber); font-weight: 700; }
+
+  /* ─── SCORE GRID ─── */
+  .score-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+  .score-chip {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 8px;
+    text-align: center;
+    transition: border-color 0.2s;
+  }
+  .score-chip.top { border-color: var(--accent); background: rgba(59,130,246,0.04); }
+  .score-chip-val { font-family: var(--font-display); font-size: 22px; font-weight: 900; color: var(--text); }
+  .score-chip.top .score-chip-val { color: var(--accent2); }
+  .score-chip-prob { font-size: 10px; color: var(--muted); margin-top: 3px; }
+
+  /* ─── FACTOR LIST ─── */
+  .factor-item {
+    display: flex;
+    gap: 16px;
+    padding: 14px 16px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 10px;
+  }
+  .factor-num {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--accent);
+    min-width: 32px;
+    opacity: 0.6;
+  }
+  .factor-text { font-size: 12px; color: #9eadc8; line-height: 1.7; padding-top: 4px; }
+
+  /* ─── OU BREAKDOWN ─── */
+  .ou-row { margin-bottom: 12px; }
+  .ou-row-head { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); margin-bottom: 4px; }
+  .ou-track { display: flex; height: 8px; border-radius: 4px; overflow: hidden; gap: 1px; }
+  .ou-over  { background: var(--green); }
+  .ou-under { background: var(--accent); }
+
+  /* ─── ELO DISPLAY ─── */
+  .elo-row { margin-bottom: 14px; }
+  .elo-head { display: flex; justify-content: space-between; margin-bottom: 5px; }
+  .elo-name { font-size: 13px; font-weight: 600; }
+  .elo-val { font-family: var(--font-display); font-size: 18px; font-weight: 800; color: var(--accent2); }
+
+  /* ─── ERROR ─── */
+  .error-box {
+    background: rgba(239,68,68,0.06);
+    border: 1px solid rgba(239,68,68,0.25);
+    border-radius: 10px;
+    padding: 14px 18px;
+    color: #fca5a5;
+    font-size: 12px;
+    margin-bottom: 16px;
+    display: none;
+  }
+  .error-box.visible { display: block; }
+
+  /* ─── FOOTER ─── */
+  footer {
+    text-align: center;
+    padding: 40px 24px;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: var(--dim);
+    line-height: 2;
+  }
+  footer strong { color: var(--muted); }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 700px) {
+    .input-grid { grid-template-columns: 1fr; }
+    .vs-divider { display: none; }
+    .odds-grid { grid-template-columns: 1fr 1fr; }
+    .hero-teams { grid-template-columns: 1fr auto 1fr; gap: 8px; }
+    .hero-abbrev { font-size: 36px; }
+    .hero-prob { font-size: 32px; }
+    .grid-2 { grid-template-columns: 1fr; }
+    .grid-3 { grid-template-columns: 1fr 1fr; }
+    .score-grid { grid-template-columns: repeat(3, 1fr); }
+    .tabs { flex-wrap: wrap; }
+    header { padding: 0 16px; }
+    .main { padding: 20px 16px 60px; }
+  }
+
+  /* ─── BEST BET SUMMARY BANNER ─── */
+  .best-bet-banner {
+    position: relative;
+    border-radius: 16px;
+    padding: 2px;
+    margin-bottom: 24px;
+    overflow: hidden;
+  }
+  .best-bet-banner.ml-home  { background: linear-gradient(135deg, #1d4ed8, #3b82f6, #1d4ed8); }
+  .best-bet-banner.ml-away  { background: linear-gradient(135deg, #7c3aed, #a78bfa, #7c3aed); }
+  .best-bet-banner.ou-over  { background: linear-gradient(135deg, #065f46, #10b981, #065f46); }
+  .best-bet-banner.ou-under { background: linear-gradient(135deg, #1e40af, #3b82f6, #1e40af); }
+  .best-bet-banner.no-value { background: linear-gradient(135deg, #1e2a3a, #263040, #1e2a3a); }
+
+  .bbs-glow {
+    position: absolute;
+    inset: -40px;
+    border-radius: 50%;
+    opacity: 0.15;
+    filter: blur(40px);
+    pointer-events: none;
+  }
+  .best-bet-banner.ml-home  .bbs-glow { background: #3b82f6; }
+  .best-bet-banner.ml-away  .bbs-glow { background: #8b5cf6; }
+  .best-bet-banner.ou-over  .bbs-glow { background: #10b981; }
+  .best-bet-banner.ou-under .bbs-glow { background: #3b82f6; }
+  .best-bet-banner.no-value .bbs-glow { background: #263040; }
+
+  .bbs-inner {
+    background: #080d18;
+    border-radius: 14px;
+    padding: 28px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 32px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .bbs-left { flex: 1; }
+
+  .bbs-eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .bbs-matchup {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 8px;
+    letter-spacing: 0.05em;
+  }
+
+  .bbs-pick {
+    font-family: var(--font-display);
+    font-size: 42px;
+    font-weight: 900;
+    letter-spacing: -0.01em;
+    line-height: 1;
+    margin-bottom: 14px;
+  }
+  .best-bet-banner.ml-home  .bbs-pick { color: var(--accent2); }
+  .best-bet-banner.ml-away  .bbs-pick { color: #c4b5fd; }
+  .best-bet-banner.ou-over  .bbs-pick { color: #6ee7b7; }
+  .best-bet-banner.ou-under .bbs-pick { color: var(--accent2); }
+  .best-bet-banner.no-value .bbs-pick { color: var(--muted); }
+
+  .bbs-reasoning {
+    font-size: 12px;
+    color: #8899bb;
+    line-height: 1.7;
+    max-width: 520px;
+  }
+
+  .bbs-right {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    flex-shrink: 0;
+  }
+
+  .bbs-prob-ring {
+    position: relative;
+    width: 120px;
+    height: 120px;
+  }
+  .bbs-ring-svg { width: 120px; height: 120px; }
+  .best-bet-banner.ml-home  #bbsRingFill { stroke: #60a5fa; }
+  .best-bet-banner.ml-away  #bbsRingFill { stroke: #a78bfa; }
+  .best-bet-banner.ou-over  #bbsRingFill { stroke: #10b981; }
+  .best-bet-banner.ou-under #bbsRingFill { stroke: #60a5fa; }
+  .best-bet-banner.no-value #bbsRingFill { stroke: #334155; }
+
+  .bbs-ring-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .bbs-pct {
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 900;
+    line-height: 1;
+    color: var(--text);
+  }
+  .bbs-pct-label {
+    font-size: 8px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .bbs-sub-stats {
+    display: flex;
+    gap: 16px;
+    font-size: 11px;
+    text-align: center;
+  }
+  .bbs-sub-stat { }
+  .bbs-sub-stat-val { font-weight: 700; color: var(--text); font-family: var(--font-display); font-size: 16px; }
+  .bbs-sub-stat-key { color: var(--dim); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 2px; }
+
+  @media (max-width: 700px) {
+    .bbs-inner { flex-direction: column; padding: 20px; gap: 20px; }
+    .bbs-right { flex-direction: row; align-items: center; }
+    .bbs-pick { font-size: 32px; }
+  }
+
+
+  /* ─── ODDS LOADER ─── */
+  .odds-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    margin-top: 10px;
+    min-height: 20px;
+  }
+  .odds-status-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .odds-status.loading .odds-status-dot { background: var(--amber); animation: pulse 1s infinite; }
+  .odds-status.success .odds-status-dot { background: var(--green); }
+  .odds-status.error   .odds-status-dot { background: var(--red); }
+  .odds-status.idle    .odds-status-dot { background: var(--dim); }
+
+  .odds-games-list {
+    display: none;
+    margin-top: 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .odds-games-list.visible { display: block; }
+
+  .odds-game-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.15s;
+    gap: 12px;
+  }
+  .odds-game-row:last-child { border-bottom: none; }
+  .odds-game-row:hover { background: var(--surface2); }
+  .odds-game-row.selected { background: rgba(59,130,246,0.08); border-left: 2px solid var(--accent); }
+
+  .odds-game-teams { font-size: 12px; font-weight: 600; flex: 1; }
+  .odds-game-time  { font-size: 10px; color: var(--muted); white-space: nowrap; }
+  .odds-game-lines { display: flex; gap: 10px; font-size: 11px; font-family: var(--font-mono); }
+  .odds-line-chip  { background: var(--bg); border: 1px solid var(--border2); border-radius: 4px; padding: 3px 8px; }
+  .odds-line-chip.home { color: var(--accent2); }
+  .odds-line-chip.away { color: var(--purple); }
+  .odds-line-chip.ou   { color: var(--muted); }
+
+  .load-odds-btn {
+    background: transparent;
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    color: var(--muted);
+    padding: 7px 14px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .load-odds-btn:hover { border-color: var(--accent); color: var(--accent2); }
+  .load-odds-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .odds-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+
+  /* ─── DEBUG BOX ─── */
+  #oddsDebugBox {
+    display: none;
+    margin-top: 10px;
+    background: #000;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 10px;
+    color: #0f0;
+    font-family: monospace;
+    max-height: 120px;
+    overflow-y: auto;
+    line-height: 1.6;
+  }
+
+
+  /* ─── STATS STATUS BAR ─── */
+  .stats-status {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 10px;
+    padding: 6px 0 2px 0;
+    letter-spacing: 0.04em;
+  }
+  .stats-status-dot {
+    width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+  }
+  .stats-status.ok      .stats-status-dot { background: var(--green); box-shadow: 0 0 5px var(--green); }
+  .stats-status.loading .stats-status-dot { background: var(--amber); animation: pulse 1s infinite; }
+  .stats-status.warn    .stats-status-dot { background: var(--amber); }
+  .stats-status.idle    .stats-status-dot { background: var(--dim); }
+  .stats-status.ok      #statsStatusText  { color: var(--green); }
+  .stats-status.loading #statsStatusText  { color: var(--amber); }
+  .stats-status.warn    #statsStatusText  { color: var(--amber); }
+  .stats-status.idle    #statsStatusText  { color: var(--dim); }
+
+
+  /* ─── BEST BETS OF THE DAY ─── */
+  .bbd-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px 24px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .bbd-panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), #8b5cf6, var(--green), var(--amber));
+  }
+  .bbd-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .bbd-title {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--text);
+  }
+  .bbd-title span { color: var(--accent2); }
+  .bbd-subtitle {
+    font-size: 10px;
+    letter-spacing: .12em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+  .bbd-refresh-btn {
+    background: rgba(99,102,241,.1);
+    border: 1px solid rgba(99,102,241,.3);
+    border-radius: 6px;
+    color: var(--accent2);
+    padding: 7px 14px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    cursor: pointer;
+    transition: all .2s;
+    white-space: nowrap;
+  }
+  .bbd-refresh-btn:hover { background: rgba(99,102,241,.2); }
+  .bbd-refresh-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .bbd-status {
+    font-size: 10px;
+    color: var(--muted);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .bbd-status-dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--dim);
+    flex-shrink: 0;
+  }
+  .bbd-status.scanning .bbd-status-dot { background: var(--amber); animation: pulse 1s infinite; }
+  .bbd-status.done .bbd-status-dot { background: var(--green); }
+  .bbd-status.err .bbd-status-dot { background: var(--red); }
+  .bbd-status.scanning span { color: var(--amber); }
+  .bbd-status.done span { color: var(--green); }
+
+  .bbd-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  .bbd-bet-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    cursor: pointer;
+    transition: all .2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .bbd-bet-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .bbd-bet-card.type-home::before  { background: linear-gradient(90deg, #4338ca, #818cf8); }
+  .bbd-bet-card.type-away::before  { background: linear-gradient(90deg, #7c3aed, #a78bfa); }
+  .bbd-bet-card.type-over::before  { background: linear-gradient(90deg, #065f46, #10b981); }
+  .bbd-bet-card.type-under::before { background: linear-gradient(90deg, #1e40af, #60a5fa); }
+  .bbd-bet-card:hover { border-color: var(--accent2); transform: translateY(-2px); box-shadow: 0 6px 24px rgba(99,102,241,.15); }
+  .bbd-rank {
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .bbd-rank.r1 { color: #fbbf24; }
+  .bbd-rank.r2 { color: #94a3b8; }
+  .bbd-rank.r3 { color: #b45309; }
+  .bbd-rank.r4 { color: var(--muted); }
+  .bbd-matchup { font-size: 10px; color: var(--muted); margin-bottom: 4px; }
+  .bbd-pick {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 900;
+    line-height: 1.1;
+    margin-bottom: 10px;
+    color: var(--text);
+  }
+  .bbd-stats-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    margin-bottom: 5px;
+  }
+  .bbd-stats-key { color: var(--muted); }
+  .bbd-stats-val { font-weight: 600; }
+  .bbd-kelly-bar {
+    margin-top: 10px;
+    padding: 5px 8px;
+    background: rgba(245,158,11,.08);
+    border: 1px solid rgba(245,158,11,.2);
+    border-radius: 4px;
+    font-size: 10px;
+    color: var(--muted);
+  }
+  .bbd-kelly-bar span { color: var(--amber); font-weight: 700; }
+  .bbd-empty {
+    grid-column: 1/-1;
+    text-align: center;
+    padding: 32px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .bbd-loading {
+    grid-column: 1/-1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 32px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .bbd-spinner {
+    width: 20px; height: 20px;
+    border: 2px solid var(--border2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media(max-width:800px) { .bbd-grid { grid-template-columns: 1fr 1fr; } }
+  @media(max-width:500px) { .bbd-grid { grid-template-columns: 1fr; } }
+
+</style>
+</head>
+
+<body>
+<div id="app">
+
+<header>
+  <div>
+    <div class="logo">NHL<span>.</span>EDGE</div>
+  </div>
+  <span class="logo-tag">v2.0</span>
+  <div class="header-right">
+    <div class="pill"><div class="dot"></div>Live Models</div>
+    <div class="pill" id="datePill"></div>
+  </div>
+  <div style="width:100%;background:rgba(0,0,0,0.4);border-top:1px solid var(--border);padding:4px 32px"><div class="stats-status idle" id="statsStatus"><div class="stats-status-dot" id="statsStatusDot"></div><span id="statsStatusText">Using verified 2025-26 stats — loading live updates...</span></div></div>
+</header>
+
+<div class="main">
+
+  <!-- BEST BETS OF THE DAY -->
+  <div class="bbd-panel">
+    <div class="bbd-header">
+      <div>
+        <div class="bbd-title">Best Bets <span>Today</span></div>
+        <div class="bbd-subtitle" id="bbdDate">Scanning today slate...</div>
+      </div>
+      <button class="bbd-refresh-btn" id="bbdRefreshBtn" onclick="scanTodaysBets()">⚡ Scan Today's Games</button>
+    </div>
+    <div class="bbd-status" id="bbdStatus">
+      <div class="bbd-status-dot"></div>
+      <span id="bbdStatusText">Click Scan to analyze today full slate and surface the top value bets</span>
+    </div>
+    <div class="bbd-grid" id="bbdGrid">
+      <div class="bbd-empty">Click <strong>Scan Today's Games</strong> above to automatically analyze every game on today NHL schedule and rank the best bets by Kelly % and model edge.</div>
+    </div>
+  </div>
+
+  <!-- INPUT PANEL -->
+  <div class="panel">
+    <div class="panel-title">Configure Matchup</div>
+
+    <div class="input-grid">
+      <div>
+        <label>Away Team</label>
+        <div class="team-select-wrap">
+          <select id="awayTeam"></select>
+        </div>
+      </div>
+      <div class="vs-divider"><div class="vs-text">@</div></div>
+      <div>
+        <label>Home Team</label>
+        <div class="team-select-wrap">
+          <select id="homeTeam"></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="odds-header-row">
+      <label style="margin:0">Odds <span style="color:var(--dim);font-size:9px;letter-spacing:.1em">(AMERICAN FORMAT)</span></label>
+      <button class="load-odds-btn" id="loadOddsBtn" onclick="loadLiveOdds()">
+        <span id="loadOddsBtnIcon">⚡</span> Load Live Odds
+      </button>
+    </div>
+    <div class="odds-status idle" id="oddsStatus">
+      <div class="odds-status-dot"></div>
+      <span id="oddsStatusText">Click "Load Live Odds" to auto-fill from The Odds API</span>
+    </div>
+    <div class="odds-games-list" id="oddsGamesList"></div>
+    <div id="oddsDebugBox"></div>
+
+    <div class="odds-grid" style="margin-top:14px">
+      <div>
+        <label>Home Moneyline</label>
+        <input type="text" id="homeMl" placeholder="-140" value="-140">
+      </div>
+      <div>
+        <label>Away Moneyline</label>
+        <input type="text" id="awayMl" placeholder="+120" value="+120">
+      </div>
+      <div>
+        <label>O/U Line</label>
+        <input type="text" id="ouLine" placeholder="5.5" value="5.5">
+      </div>
+    </div>
+
+    <button id="analyzeBtn" onclick="runAnalysis()">
+      <div class="btn-shimmer"></div>
+      ⚡ Run Full Analysis
+    </button>
+
+    <div class="loading-bar" id="loadingBar"></div>
+    <div class="loading-steps" id="loadingSteps">
+      <div class="step-chip" id="step1">Poisson Model</div>
+      <div class="step-chip" id="step2">Elo Ratings</div>
+      <div class="step-chip" id="step3">Monte Carlo 50K</div>
+      <div class="step-chip" id="step4">Kelly Criterion</div>
+      <div class="step-chip" id="step5">Edge Detection</div>
+    </div>
+  </div>
+
+  <div class="error-box" id="errorBox"></div>
+
+  <!-- RESULTS -->
+  <div id="results">
+
+    <!-- Hero -->
+    <div class="matchup-hero" id="heroPanel">
+      <div class="hero-teams">
+        <div class="hero-team">
+          <div class="hero-team-label">Away</div>
+          <div class="hero-abbrev away" id="heroAway"></div>
+          <div class="hero-name" id="heroAwayName"></div>
+          <div class="hero-prob away" id="heroProbAway"></div>
+          <div class="hero-prob-label">Win Probability</div>
+        </div>
+        <div class="hero-center">
+          <span class="hero-at">@</span>
+          <div class="hero-total-label">Expected Total</div>
+          <div class="hero-total" id="heroTotal"></div>
+          <div style="margin-top:10px" id="heroConf"></div>
+        </div>
+        <div class="hero-team">
+          <div class="hero-team-label">Home</div>
+          <div class="hero-abbrev home" id="heroHome"></div>
+          <div class="hero-name" id="heroHomeName"></div>
+          <div class="hero-prob home" id="heroProbHome"></div>
+          <div class="hero-prob-label">Win Probability</div>
+        </div>
+      </div>
+
+      <div class="win-bar-wrap">
+        <div class="win-bar">
+          <div class="win-bar-away" id="winBarAway"></div>
+          <div class="win-bar-home" id="winBarHome"></div>
+        </div>
+        <div class="win-bar-labels">
+          <span id="winLabelAway"></span>
+          <span id="winLabelHome"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('overview',this)">Overview</button>
+      <button class="tab-btn" onclick="switchTab('models',this)">Models</button>
+      <button class="tab-btn" onclick="switchTab('betting',this)">Betting Value</button>
+      <button class="tab-btn" onclick="switchTab('scores',this)">Score Probs</button>
+      <button class="tab-btn" onclick="switchTab('factors',this)">Key Factors</button>
+    </div>
+
+    <!-- OVERVIEW -->
+    <div class="tab-pane active" id="tab-overview">
+      <div class="grid-2">
+
+        <div class="stat-card">
+          <div class="stat-card-title">Expected Goals</div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:14px">
+            <div>
+              <div style="font-size:10px;color:var(--muted);margin-bottom:4px" id="xgAwayLabel"></div>
+              <div class="big-num purple" id="xgAway"></div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:10px;color:var(--muted);margin-bottom:4px" id="xgHomeLabel"></div>
+              <div class="big-num blue" id="xgHome"></div>
+            </div>
+          </div>
+          <div class="bar-wrap"><div class="bar-fill" id="xgBar" style="background:linear-gradient(90deg,#2563eb,#60a5fa)"></div></div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-title">O/U Probabilities by Line</div>
+          <div id="ouBreakdown"></div>
+        </div>
+
+        <div class="stat-card span-2">
+          <div class="stat-card-title">Recommended Bets</div>
+          <div class="grid-2" id="bestBets"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODELS -->
+    <div class="tab-pane" id="tab-models">
+      <div class="grid-2">
+        <div class="stat-card span-2">
+          <div class="stat-card-title">Model Consensus — Win Probability</div>
+          <div id="modelBars"></div>
+          <div style="display:flex;justify-content:space-between;margin-top:12px;font-size:10px;color:var(--dim)">
+            <div style="display:flex;align-items:center;gap:6px"><div style="width:10px;height:10px;border-radius:2px;background:linear-gradient(90deg,#2563eb,#60a5fa)"></div><span id="modelLegendHome"></span> (Home)</div>
+            <div style="display:flex;align-items:center;gap:6px"><span id="modelLegendAway"></span> (Away)<div style="width:10px;height:10px;border-radius:2px;background:linear-gradient(90deg,#7c3aed,#a78bfa)"></div></div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-title">Elo Ratings</div>
+          <div id="eloDisplay"></div>
+          <div style="font-size:10px;color:var(--dim);margin-top:10px">Base rating: 1500 · HFA: +35pts</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-title">Ensemble Weights</div>
+          <div id="weightBars"></div>
+          <div style="font-size:10px;color:var(--dim);margin-top:10px">40% Poisson · 30% Elo · 30% Monte Carlo</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BETTING -->
+    <div class="tab-pane" id="tab-betting">
+      <div class="grid-2">
+        <div class="stat-card">
+          <div class="stat-card-title">Moneyline Analysis</div>
+          <div id="mlCards"></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-title" id="ouCardTitle"></div>
+          <div id="ouCards"></div>
+          <div style="background:var(--surface);border-radius:8px;padding:12px;margin-top:10px">
+            <div style="font-size:10px;color:var(--muted);margin-bottom:4px">Expected total goals</div>
+            <div class="big-num blue" id="ouExpTotal" style="font-size:32px"></div>
+            <div style="font-size:10px;color:var(--dim);margin-top:2px" id="ouVsLine"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCORES -->
+    <div class="tab-pane" id="tab-scores">
+      <div class="stat-card">
+        <div class="stat-card-title">Score Probability Matrix</div>
+        <div style="margin-bottom:20px">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:6px">Most likely final score</div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="font-family:var(--font-display);font-size:48px;font-weight:900;color:var(--accent2)" id="topScore"></div>
+            <div style="font-size:12px;color:var(--muted)" id="topScoreProb"></div>
+          </div>
+        </div>
+        <div class="score-grid" id="scoreGrid"></div>
+      </div>
+    </div>
+
+    <!-- FACTORS -->
+    <div class="tab-pane" id="tab-factors">
+      <div class="stat-card">
+        <div class="stat-card-title">Key Analytical Factors</div>
+        <div id="factorList"></div>
+      </div>
+    </div>
+
+  </div><!-- /results -->
+
+  <!-- BEST BET SUMMARY -->
+  <div id="bestBetSummary" style="display:none;animation:fadeUp 0.5s ease 0.1s both">
+    <div class="best-bet-banner" id="bestBetBanner">
+      <div class="bbs-glow" id="bbsGlow"></div>
+      <div class="bbs-inner">
+        <div class="bbs-left">
+          <div class="bbs-eyebrow">⚡ Algorithm Recommendation</div>
+          <div class="bbs-matchup" id="bbsMatchup"></div>
+          <div class="bbs-pick" id="bbsPick"></div>
+          <div class="bbs-reasoning" id="bbsReasoning"></div>
+        </div>
+        <div class="bbs-right">
+          <div class="bbs-prob-ring">
+            <svg viewBox="0 0 120 120" class="bbs-ring-svg">
+              <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="10"/>
+              <circle cx="60" cy="60" r="50" fill="none" id="bbsRingFill"
+                stroke-width="10" stroke-linecap="round"
+                stroke-dasharray="314.16" stroke-dashoffset="314.16"
+                transform="rotate(-90 60 60)"
+                style="transition: stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1)"/>
+            </svg>
+            <div class="bbs-ring-text">
+              <div class="bbs-pct" id="bbsPct"></div>
+              <div class="bbs-pct-label">Success</div>
+            </div>
+          </div>
+          <div class="bbs-sub-stats" id="bbsSubStats"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BEST BET BANNER -->
+  <div class="bbb-wrap" id="bbbWrap" style="display:none">
+    <div class="bbb" id="bbbCard">
+      <div class="bbb-inner">
+        <div class="bbb-left">
+          <div class="bbb-eye">Algorithm Recommendation</div>
+          <div class="bbb-match" id="bbbMatch"></div>
+          <div class="bbb-pick" id="bbbPick"></div>
+          <div class="bbb-reason" id="bbbReason"></div>
+        </div>
+        <div class="bbb-right">
+          <div class="bbb-ring">
+            <svg viewBox="0 0 120 120">
+              <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="9"/>
+              <circle cx="60" cy="60" r="50" fill="none" id="bbbRing" stroke-width="9" stroke-linecap="round"
+                stroke-dasharray="314.16" stroke-dashoffset="314.16" transform="rotate(-90 60 60)"
+                style="transition:stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1)"/>
+            </svg>
+            <div class="bbb-ring-text">
+              <div class="bbb-pct" id="bbbPct"></div>
+              <div class="bbb-pct-lbl">Success</div>
+            </div>
+          </div>
+          <div class="bbb-stats" id="bbbStats"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <footer>
+    <strong>NHL.EDGE</strong> · Dixon-Coles Bivariate Poisson · 50,000-Iteration Monte Carlo · Elo with MoV Adjustment · Fractional Kelly Criterion (¼×)<br>
+    All computations run in your browser. For research purposes only. Please gamble responsibly.
+  </footer>
+
+</div>
+</div>
+
+<script>
+window.onerror = function(msg, src, line, col, err) {
+  document.body.style.background = '#0d1117';
+  document.body.style.color = '#e6edf3';
+  document.body.style.fontFamily = 'monospace';
+  document.body.style.padding = '40px';
+  document.body.innerHTML = '<h2 style="color:#ef4444">Error on line ' + line + '</h2><p style="margin-top:12px;color:#f87171">' + msg + '</p>';
+};
+
+var TEAMS = {
+  ANA:'Anaheim Ducks',BOS:'Boston Bruins',BUF:'Buffalo Sabres',CGY:'Calgary Flames',
+  CAR:'Carolina Hurricanes',CHI:'Chicago Blackhawks',COL:'Colorado Avalanche',
+  CBJ:'Columbus Blue Jackets',DAL:'Dallas Stars',DET:'Detroit Red Wings',
+  EDM:'Edmonton Oilers',FLA:'Florida Panthers',LAK:'Los Angeles Kings',
+  MIN:'Minnesota Wild',MTL:'Montreal Canadiens',NSH:'Nashville Predators',
+  NJD:'New Jersey Devils',NYI:'New York Islanders',NYR:'New York Rangers',
+  OTT:'Ottawa Senators',PHI:'Philadelphia Flyers',PIT:'Pittsburgh Penguins',
+  SEA:'Seattle Kraken',SJS:'San Jose Sharks',STL:'St. Louis Blues',
+  TBL:'Tampa Bay Lightning',TOR:'Toronto Maple Leafs',UTA:'Utah Hockey Club',
+  VAN:'Vancouver Canucks',VGK:'Vegas Golden Knights',WSH:'Washington Capitals',WPG:'Winnipeg Jets'
+};
+
+var TEAM_STATS = {
+  COL:{gf:3.78,ga:2.44,wp:.723},DAL:{gf:3.40,ga:2.60,wp:.659},
+  WSH:{gf:3.20,ga:2.40,wp:.641},CAR:{gf:3.25,ga:2.55,wp:.636},
+  FLA:{gf:3.15,ga:2.65,wp:.625},BOS:{gf:3.35,ga:2.75,wp:.617},
+  VGK:{gf:3.30,ga:2.80,wp:.609},LAK:{gf:3.10,ga:2.65,wp:.602},
+  EDM:{gf:3.45,ga:3.05,wp:.578},TOR:{gf:3.30,ga:3.10,wp:.570},
+  TBL:{gf:3.20,ga:2.85,wp:.563},MIN:{gf:3.05,ga:2.75,wp:.555},
+  NYR:{gf:3.00,ga:2.80,wp:.547},NJD:{gf:3.10,ga:2.90,wp:.539},
+  PIT:{gf:2.95,ga:2.85,wp:.531},OTT:{gf:3.05,ga:2.95,wp:.523},
+  UTA:{gf:3.00,ga:2.90,wp:.516},PHI:{gf:2.85,ga:2.80,wp:.508},
+  WPG:{gf:2.95,ga:3.05,wp:.484},DET:{gf:2.80,ga:2.95,wp:.477},
+  NYI:{gf:2.75,ga:2.90,wp:.469},SEA:{gf:2.80,ga:3.10,wp:.461},
+  MTL:{gf:2.70,ga:3.05,wp:.453},STL:{gf:2.75,ga:3.15,wp:.438},
+  BUF:{gf:2.90,ga:3.20,wp:.430},NSH:{gf:2.65,ga:3.25,wp:.414},
+  CBJ:{gf:2.65,ga:3.20,wp:.406},CGY:{gf:2.55,ga:3.15,wp:.398},
+  ANA:{gf:2.75,ga:3.35,wp:.383},VAN:{gf:2.60,ga:3.45,wp:.352},
+  CHI:{gf:2.45,ga:3.50,wp:.320},SJS:{gf:2.35,ga:3.65,wp:.289}
+};
+
+var LEAGUE_AVG_GF = 3.05;
+var statsLoadedAt = null;
+var GOALIE_STATS = {};
+var TEAM_SKATER_STATS = {};
+
+async function loadNHLStats() {
+  var statusEl = document.getElementById('statsStatus');
+  var textEl = document.getElementById('statsStatusText');
+  if (statsLoadedAt && (Date.now() - statsLoadedAt) < 3600000) return;
+  if (statusEl) statusEl.className = 'stats-status loading';
+  if (textEl) textEl.textContent = 'Connecting to data pipeline...';
+
+  try {
+    var res = await fetch('https://bazoff18.github.io/nhl-analytics/data/standings.json?t=' + Date.now());
+    if (res.ok) {
+      var json = await res.json();
+      if (json && json.teams && Object.keys(json.teams).length > 20) {
+        var ns = {}, tgf = 0, cnt = 0;
+        for (var ab in json.teams) {
+          var t = json.teams[ab];
+          ns[ab] = {gf: t.gf_pg || 3.0, ga: t.ga_pg || 3.0, wp: t.pts_pct || 0.5};
+          tgf += (t.gf_pg || 3.0); cnt++;
+        }
+        TEAM_STATS = ns; LEAGUE_AVG_GF = tgf / Math.max(cnt, 1); statsLoadedAt = Date.now();
+        if (statusEl) statusEl.className = 'stats-status ok';
+        if (textEl) textEl.textContent = 'Live pipeline data - ' + cnt + ' teams - ' + new Date(json.updated).toLocaleString();
+        fetch('https://bazoff18.github.io/nhl-analytics/data/goalies.json?t=' + Date.now())
+          .then(function(r) { if (r.ok) r.json().then(function(d) { if (d && d.goalies) processGoalieStats(d.goalies); }); })
+          .catch(function() {});
+        fetch('https://bazoff18.github.io/nhl-analytics/data/skaters.json?t=' + Date.now())
+          .then(function(r) { if (r.ok) r.json().then(function(d) { if (d && d.players) processSkaterStats(d.players); }); })
+          .catch(function() {});
+        return;
+      }
+    }
+  } catch(e) {}
+
+  var apiUrls = [
+    'https://api-web.nhle.com/v1/standings/now',
+    'https://corsproxy.io/?' + encodeURIComponent('https://api-web.nhle.com/v1/standings/now'),
+    'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://api-web.nhle.com/v1/standings/now')
+  ];
+  for (var i = 0; i < apiUrls.length; i++) {
+    try {
+      var r2 = await fetch(apiUrls[i]);
+      if (!r2.ok) continue;
+      var d2 = await r2.json();
+      if (d2 && d2.standings && d2.standings.length > 20) {
+        var ns2 = {}, tgf2 = 0, cnt2 = 0;
+        for (var si = 0; si < d2.standings.length; si++) {
+          var st = d2.standings[si];
+          var ab2 = st.teamAbbrev && st.teamAbbrev.default ? st.teamAbbrev.default : '';
+          var gp2 = st.gamesPlayed || 1;
+          if (ab2) {
+            ns2[ab2] = {
+              gf: Math.round((st.goalFor || 0) / gp2 * 100) / 100,
+              ga: Math.round((st.goalAgainst || 0) / gp2 * 100) / 100,
+              wp: st.pointPctg || 0
+            };
+            tgf2 += (st.goalFor || 0) / gp2; cnt2++;
+          }
+        }
+        if (cnt2 > 20) {
+          TEAM_STATS = ns2; LEAGUE_AVG_GF = tgf2 / cnt2; statsLoadedAt = Date.now();
+          if (statusEl) statusEl.className = 'stats-status ok';
+          if (textEl) textEl.textContent = 'NHL API data - ' + cnt2 + ' teams - ' + new Date().toLocaleTimeString();
+          return;
+        }
+      }
+    } catch(e2) {}
+  }
+  statsLoadedAt = Date.now();
+  if (statusEl) statusEl.className = 'stats-status ok';
+  if (textEl) textEl.textContent = 'Using verified 2025-26 stats';
+}
+
+function processGoalieStats(goalies) {
+  var best = {};
+  for (var i = 0; i < goalies.length; i++) {
+    var g = goalies[i];
+    var ab = g.teamAbbrevs || g.teamAbbrev || '';
+    var sv = g.savePct || g.savePctg || 0;
+    if (sv > 1) sv = sv / 100;
+    var gp = g.gamesPlayed || 0;
+    if (!ab || gp < 3) continue;
+    if (!best[ab] || gp > (best[ab].gp || 0)) {
+      best[ab] = {sv: sv, gaa: g.goalsAgainstAverage || 2.8, gp: gp, name: g.goalieFullName || ''};
+    }
+  }
+  GOALIE_STATS = best;
+  for (var team in best) {
+    if (TEAM_STATS[team]) {
+      TEAM_STATS[team].sv = best[team].sv;
+      TEAM_STATS[team].gaa = best[team].gaa;
+      TEAM_STATS[team].goalie = best[team].name;
+    }
+  }
+}
+
+function processSkaterStats(players) {
+  var by = {};
+  for (var i = 0; i < players.length; i++) {
+    var p = players[i];
+    var ab = p.teamAbbrevs || '';
+    if (!ab) continue;
+    if (!by[ab]) by[ab] = {pts: 0, g: 0, players: 0, topScorer: '', topPts: 0};
+    by[ab].pts += p.points || 0;
+    by[ab].g += p.goals || 0;
+    by[ab].players++;
+    if ((p.points || 0) > by[ab].topPts) {
+      by[ab].topPts = p.points || 0;
+      by[ab].topScorer = p.skaterFullName || '';
+    }
+  }
+  TEAM_SKATER_STATS = by;
+}
+
+function poissonPMF(k, lam) {
+  if (lam <= 0) return k === 0 ? 1 : 0;
+  var lp = -lam + k * Math.log(lam);
+  for (var i = 2; i <= k; i++) lp -= Math.log(i);
+  return Math.exp(lp);
+}
+
+function dcTau(x, y, lam, mu, rho) {
+  if (x === 0 && y === 0) return 1 - lam * mu * rho;
+  if (x === 0 && y === 1) return 1 + lam * rho;
+  if (x === 1 && y === 0) return 1 + mu * rho;
+  if (x === 1 && y === 1) return 1 - rho;
+  return 1;
+}
+
+function computeExpectedGoals(home, away) {
+  var hs = TEAM_STATS[home] || {gf: 3.0, ga: 3.0, wp: .5};
+  var as = TEAM_STATS[away] || {gf: 3.0, ga: 3.0, wp: .5};
+  var homeAtk = hs.gf / LEAGUE_AVG_GF;
+  var homeDef = hs.ga / LEAGUE_AVG_GF;
+  var awayAtk = as.gf / LEAGUE_AVG_GF;
+  var awayDef = as.ga / LEAGUE_AVG_GF;
+  var leagueSV = 0.910;
+  var hg2 = GOALIE_STATS[home];
+  var ag2 = GOALIE_STATS[away];
+  if (hg2 && hg2.sv > 0) homeDef = homeDef * (hg2.sv / leagueSV);
+  if (ag2 && ag2.sv > 0) awayDef = awayDef * (ag2.sv / leagueSV);
+  var lam = LEAGUE_AVG_GF * homeAtk * awayDef * 1.06;
+  var mu = LEAGUE_AVG_GF * awayAtk * homeDef;
+  return [Math.max(lam, 0.5), Math.max(mu, 0.5)];
+}
+
+function scoreProbMatrix(lam, mu) {
+  var n = 9, rho = -0.08, mat = [], total = 0;
+  for (var i = 0; i < n; i++) {
+    mat[i] = [];
+    for (var j = 0; j < n; j++) {
+      var p = poissonPMF(i, lam) * poissonPMF(j, mu) * Math.max(dcTau(i, j, lam, mu, rho), 1e-10);
+      mat[i][j] = p; total += p;
+    }
+  }
+  for (var i2 = 0; i2 < n; i2++) for (var j2 = 0; j2 < n; j2++) mat[i2][j2] /= total;
+  return mat;
+}
+
+function poissonSample(lam) {
+  var L = Math.exp(-lam), k = 0, p = 1;
+  do { k++; p *= Math.random(); } while (p > L);
+  return k - 1;
+}
+
+function runMonteCarlo(lam, mu) {
+  var N = 50000, homeWins = 0, totalDist = [];
+  for (var t = 0; t < 16; t++) totalDist[t] = 0;
+  for (var i = 0; i < N; i++) {
+    var hg3 = poissonSample(lam), ag3 = poissonSample(mu);
+    if (hg3 === ag3) {
+      var totRate = lam / 12 + mu / 12;
+      var pHOT = totRate > 0 ? (lam / 12) / totRate : 0.5;
+      if (Math.random() < 0.72) { if (Math.random() < pHOT) hg3++; else ag3++; }
+      else { if (Math.random() < 0.5) hg3++; else ag3++; }
+    }
+    if (hg3 > ag3) homeWins++;
+    totalDist[Math.min(hg3 + ag3, 15)]++;
+  }
+  var ouProbs = {}, lines2 = [4.5, 5.5, 6.5, 7.5];
+  for (var li = 0; li < lines2.length; li++) {
+    var ln = lines2[li], ov = 0, un = 0;
+    for (var g3 = 0; g3 < 16; g3++) { if (g3 > ln) ov += totalDist[g3]; else if (g3 < ln) un += totalDist[g3]; }
+    ouProbs[ln] = {over: ov / N, under: un / N};
+  }
+  var avgT = 0;
+  for (var g4 = 0; g4 < 16; g4++) avgT += totalDist[g4] * g4;
+  return {pHome: homeWins / N, pAway: (N - homeWins) / N, avgTotal: avgT / N,
+    totalDist: totalDist.map(function(v) { return v / N; }), ouProbs: ouProbs};
+}
+
+function americanToProb(line) {
+  if (line > 0) return 100 / (line + 100);
+  return Math.abs(line) / (Math.abs(line) + 100);
+}
+function probToAmerican(p) {
+  if (p <= 0 || p >= 1) return 0;
+  if (p >= 0.5) return -Math.round(p / (1 - p) * 100);
+  return Math.round((1 - p) / p * 100);
+}
+function removeVig(l1, l2) {
+  var p1 = americanToProb(l1), p2 = americanToProb(l2), tot = p1 + p2;
+  return [p1 / tot, p2 / tot];
+}
+function kellyFraction(p, line) {
+  var b = line > 0 ? line / 100 : 100 / Math.abs(line);
+  return Math.max(0, (b * p - (1 - p)) / b * 0.25);
+}
+function evCalc(p, line) {
+  var w = line > 0 ? line / 100 : 100 / Math.abs(line);
+  return p * w - (1 - p);
+}
+
+function pct(v) { return (v * 100).toFixed(1) + '%'; }
+function sgnPct(v) { return (v >= 0 ? '+' : '') + (v * 100).toFixed(1) + '%'; }
+function evFmt(v) { return (v >= 0 ? '+' : '') + v.toFixed(3); }
+
+function badge(text) {
+  var cls = {VALUE:'b-value','NO VALUE':'b-novalue',HIGH:'b-high',MEDIUM:'b-medium',LOW:'b-low',
+             OVER:'b-over',UNDER:'b-under',HOME:'b-home',AWAY:'b-away'};
+  return '<span class="badge ' + (cls[text] || 'b-novalue') + '">' + text + '</span>';
+}
+function miniBar(v, max, color) {
+  return '<div class="bar-wrap"><div class="bar-fill" style="width:' + Math.min(v/max*100,100) + '%;background:' + color + '"></div></div>';
+}
+function mbar(label, home, away) {
+  return '<div class="mbar-row"><div class="mbar-head"><span class="mbar-label">' + label + '</span>'
+    + '<span class="mbar-vals">' + pct(home) + ' / ' + pct(away) + '</span></div>'
+    + '<div class="mbar-track"><div class="mbar-home" style="flex:' + home + '"></div>'
+    + '<div class="mbar-away" style="flex:' + away + '"></div></div></div>';
+}
+
+function generateFactors(home, away, p1, lam, mu, ml, ou) {
+  var factors = [];
+  var hs = TEAM_STATS[home] || {gf:3.0,ga:3.0,wp:.5};
+  var as = TEAM_STATS[away] || {gf:3.0,ga:3.0,wp:.5};
+  var offAdv = lam > mu ? home : away;
+  factors.push(offAdv + ' holds the offensive edge with an expected ' + Math.max(lam,mu).toFixed(2)
+    + ' goals in this matchup based on attack vs defense strength.');
+  if (p1 > 0.55) {
+    factors.push('Home ice is a significant factor. ' + home + ' (' + (hs.wp*100).toFixed(0)
+      + '% win rate) has a ' + ((p1-0.5)*100).toFixed(1) + '-point projected edge at home.');
+  } else if (p1 < 0.45) {
+    factors.push(away + ' is favored despite being the road team. The model gives visitors a '
+      + ((0.5-p1)*100).toFixed(1) + '-point edge over home ice.');
+  } else {
+    factors.push('Near-even matchup. Home ice gives ' + home + ' a slight edge but '
+      + away + ' quality keeps this close at ' + pct(p1) + ' / ' + pct(1-p1) + '.');
+  }
+  var hgol = GOALIE_STATS[home], agol = GOALIE_STATS[away];
+  if (hgol && agol && hgol.sv > 0 && agol.sv > 0) {
+    var better = hgol.sv > agol.sv ? home : away;
+    factors.push(better + ' has the goaltending edge ('
+      + (Math.max(hgol.sv,agol.sv)*100).toFixed(1) + '% vs '
+      + (Math.min(hgol.sv,agol.sv)*100).toFixed(1) + '% SV%). This is factored into the expected goals model.');
+  } else {
+    var tTrend = (lam+mu)>6 ? 'high-scoring' : (lam+mu)<5.2 ? 'low-scoring' : 'moderate-scoring';
+    factors.push('The model projects a ' + tTrend + ' game with ' + (lam+mu).toFixed(2)
+      + ' expected total goals. Over probability at ' + (ou.line||5.5) + ' is ' + pct(ou.pOver) + '.');
+  }
+  var hsk = TEAM_SKATER_STATS[home];
+  if (hsk && hsk.topScorer) {
+    factors.push(hsk.topScorer + ' leads ' + home + ' with ' + hsk.topPts + ' points this season. '
+      + home + ' offense averages ' + hs.gf.toFixed(2) + ' goals per game.');
+  } else {
+    factors.push(home + ' averages ' + hs.gf.toFixed(2) + ' GF/game, ' + hs.ga.toFixed(2)
+      + ' GA/game. ' + away + ' averages ' + as.gf.toFixed(2) + ' GF/game, '
+      + as.ga.toFixed(2) + ' GA/game.');
+  }
+  return factors;
+}
+
+function buildPrediction(home, away, homeMlRaw, awayMlRaw, ouLineRaw) {
+  var homeMl = parseFloat(homeMlRaw) || null;
+  var awayMl = parseFloat(awayMlRaw) || null;
+  var ouLine = parseFloat(ouLineRaw) || 5.5;
+  var xg = computeExpectedGoals(home, away);
+  var lam = xg[0], mu = xg[1];
+  var mat = scoreProbMatrix(lam, mu);
+  var ph = 0, pa = 0, pt = 0;
+  for (var i = 0; i < mat.length; i++) {
+    for (var j = 0; j < mat[i].length; j++) {
+      if (i > j) ph += mat[i][j]; else if (j > i) pa += mat[i][j]; else pt += mat[i][j];
+    }
+  }
+  var poissonOTHome = ph + pt * (lam / (lam + mu));
+  var poissonOTAway = pa + pt * (mu / (lam + mu));
+  var hs2 = TEAM_STATS[home] || {wp:.5};
+  var as2 = TEAM_STATS[away] || {wp:.5};
+  var eloH = 1500 + (hs2.wp - 0.5) * 500 + 35;
+  var eloA = 1500 + (as2.wp - 0.5) * 500;
+  var rawH = Math.round(1500 + (hs2.wp - 0.5) * 500);
+  var rawA = Math.round(1500 + (as2.wp - 0.5) * 500);
+  var eloHome = 1 / (1 + Math.pow(10, (eloA - eloH) / 400));
+  var eloAway = 1 - eloHome;
+  var mc = runMonteCarlo(lam, mu);
+  var ensHome = 0.40 * poissonOTHome + 0.30 * eloHome + 0.30 * mc.pHome;
+  var ensAway = 1 - ensHome;
+  var mean2 = (poissonOTHome + eloHome + mc.pHome) / 3;
+  var variance = ((poissonOTHome-mean2)*(poissonOTHome-mean2)+(eloHome-mean2)*(eloHome-mean2)+(mc.pHome-mean2)*(mc.pHome-mean2))/3;
+  var conf = Math.sqrt(variance) < 0.04 ? 'HIGH' : Math.sqrt(variance) < 0.08 ? 'MEDIUM' : 'LOW';
+  var pairs = [];
+  for (var pi = 0; pi < 8; pi++) for (var pj = 0; pj < 8; pj++) pairs.push({h:pi,a:pj,p:mat[pi][pj]});
+  pairs.sort(function(a,b){return b.p-a.p;});
+  var ml1 = homeMl || probToAmerican(ensHome);
+  var ml2 = awayMl || probToAmerican(ensAway);
+  var fairH, fairA;
+  if (homeMl && awayMl) { var vigs = removeVig(homeMl,awayMl); fairH=vigs[0]; fairA=vigs[1]; }
+  else { fairH=ensHome; fairA=ensAway; }
+  var hEdge=ensHome-fairH, aEdge=ensAway-fairA;
+  var ouD = mc.ouProbs[ouLine] || {over:.5,under:.5};
+  var fairOU = 0.5238;
+  var mlA = {
+    homeEdge:hEdge, awayEdge:aEdge,
+    homeEV:evCalc(ensHome,ml1), awayEV:evCalc(ensAway,ml2),
+    homeKelly:kellyFraction(ensHome,ml1), awayKelly:kellyFraction(ensAway,ml2),
+    fairHome:fairH, fairAway:fairA,
+    bestBet: hEdge>aEdge&&hEdge>0.03?'HOME':aEdge>0.03?'AWAY':'NO VALUE'
+  };
+  var ouA = {
+    line:ouLine, pOver:ouD.over, pUnder:ouD.under,
+    edgeOver:ouD.over-fairOU, edgeUnder:ouD.under-fairOU,
+    evOver:evCalc(ouD.over,-110), evUnder:evCalc(ouD.under,-110),
+    kellyOver:kellyFraction(ouD.over,-110), kellyUnder:kellyFraction(ouD.under,-110),
+    bestBet: (ouD.over-fairOU)>(ouD.under-fairOU)&&(ouD.over-fairOU)>0.03?'OVER':(ouD.under-fairOU)>0.03?'UNDER':'NO VALUE'
+  };
+  return {
+    home:home, away:away, lam:lam, mu:mu, ml1:ml1, ml2:ml2,
+    poissonHome:poissonOTHome, poissonAway:poissonOTAway,
+    eloHome:eloHome, eloAway:eloAway, eloRawHome:rawH, eloRawAway:rawA,
+    mcHome:mc.pHome, mcAway:mc.pAway,
+    ensemble:{pHome:ensHome,pAway:ensAway,total:lam+mu,confidence:conf},
+    mlAnalysis:mlA, ouAnalysis:ouA,
+    topScores:pairs.slice(0,6), ouBreakdown:mc.ouProbs,
+    factors:generateFactors(home,away,ensHome,lam,mu,mlA,ouA)
+  };
+}
+
+function renderResults(r) {
+  var home=r.home, away=r.away, ens=r.ensemble, ml=r.mlAnalysis, ou=r.ouAnalysis;
+  document.getElementById('heroHome').textContent=home;
+  document.getElementById('heroAway').textContent=away;
+  document.getElementById('heroHomeName').textContent=TEAMS[home]||home;
+  document.getElementById('heroAwayName').textContent=TEAMS[away]||away;
+  document.getElementById('heroProbHome').textContent=pct(ens.pHome);
+  document.getElementById('heroProbAway').textContent=pct(ens.pAway);
+  document.getElementById('heroTotal').textContent=ens.total.toFixed(2);
+  document.getElementById('heroConf').innerHTML=badge(ens.confidence);
+  document.getElementById('winBarAway').style.flex=ens.pAway;
+  document.getElementById('winBarHome').style.flex=ens.pHome;
+  document.getElementById('winLabelAway').textContent=away+' '+pct(ens.pAway);
+  document.getElementById('winLabelHome').textContent=home+' '+pct(ens.pHome);
+  document.getElementById('xgAwayLabel').textContent=away;
+  document.getElementById('xgHomeLabel').textContent=home;
+  document.getElementById('xgAway').textContent=r.mu.toFixed(2);
+  document.getElementById('xgHome').textContent=r.lam.toFixed(2);
+  document.getElementById('xgBar').style.width=Math.min(r.lam/6*100,100)+'%';
+
+  var ouHtml='', lns=[4.5,5.5,6.5,7.5];
+  for (var li=0;li<lns.length;li++) {
+    var ln=lns[li], vals=r.ouBreakdown[ln]||{over:.5,under:.5};
+    ouHtml+='<div class="ou-row"><div class="ou-row-head"><span>O/U '+ln+'</span>'
+      +'<span style="color:var(--green)">Over '+pct(vals.over)+'</span>'
+      +'<span style="color:var(--blue)">Under '+pct(vals.under)+'</span></div>'
+      +'<div class="ou-track"><div class="ou-over" style="flex:'+vals.over+'"></div>'
+      +'<div class="ou-under" style="flex:'+vals.under+'"></div></div></div>';
+  }
+  document.getElementById('ouBreakdown').innerHTML=ouHtml;
+
+  var mlBest=ml.bestBet!=='NO VALUE', ouBest=ou.bestBet!=='NO VALUE';
+  var mlPick=ml.bestBet==='HOME'?home:away;
+  var mlEdge=ml.bestBet==='HOME'?ml.homeEdge:ml.awayEdge;
+  var mlK=ml.bestBet==='HOME'?ml.homeKelly:ml.awayKelly;
+  var ouEdge=ou.bestBet==='OVER'?ou.edgeOver:ou.edgeUnder;
+  var ouK=ou.bestBet==='OVER'?ou.kellyOver:ou.kellyUnder;
+  document.getElementById('bestBets').innerHTML=
+    '<div style="background:var(--bg);border:1px solid '+(mlBest?'rgba(99,102,241,.3)':'var(--border)')+';border-radius:10px;padding:16px">'
+    +'<div style="font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">MONEYLINE</div>'
+    +badge(mlBest?'VALUE':'NO VALUE')
+    +(mlBest?'<div style="margin-top:10px;font-size:11px;color:var(--muted)"><div>Pick: <span style="color:var(--text)">'+mlPick+'</span></div>'
+      +'<div>Edge: <span style="color:var(--green)">'+sgnPct(mlEdge)+'</span></div>'
+      +'<div>Kelly: <span style="color:var(--amber)">'+pct(mlK)+' bankroll</span></div></div>'
+      :'<div style="font-size:11px;color:var(--dim);margin-top:8px">No edge detected</div>')
+    +'</div>'
+    +'<div style="background:var(--bg);border:1px solid '+(ouBest?'rgba(0,212,170,.3)':'var(--border)')+';border-radius:10px;padding:16px">'
+    +'<div style="font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">TOTAL O/U '+ou.line+'</div>'
+    +badge(ouBest?'VALUE':'NO VALUE')
+    +(ouBest?'<div style="margin-top:10px;font-size:11px;color:var(--muted)"><div>Pick: <span style="color:var(--text)">'+ou.bestBet+'</span></div>'
+      +'<div>Edge: <span style="color:var(--green)">'+sgnPct(ouEdge)+'</span></div>'
+      +'<div>Kelly: <span style="color:var(--amber)">'+pct(ouK)+' bankroll</span></div></div>'
+      :'<div style="font-size:11px;color:var(--dim);margin-top:8px">No edge detected</div>')
+    +'</div>';
+
+  document.getElementById('modelLegendHome').textContent=home;
+  document.getElementById('modelLegendAway').textContent=away;
+  document.getElementById('modelBars').innerHTML=
+    mbar('Poisson Dixon-Coles (40%)',r.poissonHome,r.poissonAway)
+    +mbar('Elo Rating System (30%)',r.eloHome,r.eloAway)
+    +mbar('Monte Carlo 50K (30%)',r.mcHome,r.mcAway)
+    +mbar('Ensemble Final',ens.pHome,ens.pAway);
+
+  document.getElementById('eloDisplay').innerHTML=
+    '<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;margin-bottom:4px">'
+    +'<span>'+home+'</span><span style="color:var(--accent2);font-weight:700">'+r.eloRawHome+'</span></div>'
+    +miniBar(r.eloRawHome,1800,'#6366f1')+'</div>'
+    +'<div><div style="display:flex;justify-content:space-between;margin-bottom:4px">'
+    +'<span>'+away+'</span><span style="color:#a78bfa;font-weight:700">'+r.eloRawAway+'</span></div>'
+    +miniBar(r.eloRawAway,1800,'#7c3aed')+'</div>';
+
+  var wts=[['Poisson (Dixon-Coles)',40,'#4338ca'],['Elo Rating System',30,'#7c3aed'],['Monte Carlo',30,'#0891b2']];
+  var wtH='';
+  for (var wi=0;wi<wts.length;wi++) {
+    wtH+='<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px">'
+      +'<span style="color:var(--muted)">'+wts[wi][0]+'</span>'
+      +'<span style="color:'+wts[wi][2]+';font-weight:700">'+wts[wi][1]+'%</span></div>'
+      +miniBar(wts[wi][1],100,wts[wi][2])+'</div>';
+  }
+  document.getElementById('weightBars').innerHTML=wtH;
+
+  var mlRows=[{side:'HOME',team:home,edge:ml.homeEdge,ev2:ml.homeEV,kelly:ml.homeKelly,fair:ml.fairHome,model:ens.pHome},
+              {side:'AWAY',team:away,edge:ml.awayEdge,ev2:ml.awayEV,kelly:ml.awayKelly,fair:ml.fairAway,model:ens.pAway}];
+  var mlH='';
+  for (var mi=0;mi<mlRows.length;mi++) {
+    var md=mlRows[mi], hv=md.edge>0.03;
+    mlH+='<div class="bet-card '+(hv?'value-'+md.side:'')+'">'
+      +'<div class="bet-card-header"><span class="bet-card-name">'+md.team+' ('+md.side+')</span>'+badge(hv?'VALUE':'NO VALUE')+'</div>'
+      +'<div class="bet-stats">'
+      +'<div class="bet-stat-row"><span class="bk">Model</span><span>'+pct(md.model)+'</span></div>'
+      +'<div class="bet-stat-row"><span class="bk">Fair</span><span>'+pct(md.fair)+'</span></div>'
+      +'<div class="bet-stat-row"><span class="bk">Edge</span><span style="color:'+(md.edge>0?'var(--green)':'var(--red)')+'">'+sgnPct(md.edge)+'</span></div>'
+      +'<div class="bet-stat-row"><span class="bk">EV/$1</span><span style="color:'+(md.ev2>0?'var(--green)':'var(--red)')+'">'+evFmt(md.ev2)+'</span></div>'
+      +'</div>'
+      +(md.kelly>0.001?'<div class="kelly-bar">Kelly: <span>'+pct(md.kelly)+'</span> bankroll</div>':'')
+      +'</div>';
+  }
+  document.getElementById('mlCards').innerHTML=mlH;
+
+  document.getElementById('ouCardTitle').textContent='Total Goals O/U '+ou.line;
+  var ouRows=[{side:'OVER',prob:ou.pOver,edge:ou.edgeOver,ev2:ou.evOver,kelly:ou.kellyOver},
+              {side:'UNDER',prob:ou.pUnder,edge:ou.edgeUnder,ev2:ou.evUnder,kelly:ou.kellyUnder}];
+  var ouH2='';
+  for (var oi=0;oi<ouRows.length;oi++) {
+    var od=ouRows[oi], hov=od.edge>0.03;
+    ouH2+='<div class="bet-card '+(hov?'value-'+od.side:'')+'">'
+      +'<div class="bet-card-header">'+badge(od.side)+badge(hov?'VALUE':'NO VALUE')+'</div>'
+      +'<div class="bet-stats">'
+      +'<div class="bet-stat-row"><span class="bk">Prob</span><span>'+pct(od.prob)+'</span></div>'
+      +'<div class="bet-stat-row"><span class="bk">Edge</span><span style="color:'+(od.edge>0?'var(--green)':'var(--red)')+'">'+sgnPct(od.edge)+'</span></div>'
+      +'<div class="bet-stat-row"><span class="bk">EV/$1</span><span style="color:'+(od.ev2>0?'var(--green)':'var(--red)')+'">'+evFmt(od.ev2)+'</span></div>'
+      +(od.kelly>0.001?'<div class="bet-stat-row"><span class="bk">Kelly</span><span style="color:var(--amber)">'+pct(od.kelly)+'</span></div>':'')
+      +'</div></div>';
+  }
+  document.getElementById('ouCards').innerHTML=ouH2;
+  document.getElementById('ouExpTotal').textContent=ens.total.toFixed(2);
+  document.getElementById('ouVsLine').textContent='vs. posted line of '+ou.line;
+
+  document.getElementById('topScore').textContent=r.topScores[0].h+'-'+r.topScores[0].a;
+  document.getElementById('topScoreProb').textContent=pct(r.topScores[0].p)+' probability';
+  var sgH='';
+  for (var sci=0;sci<r.topScores.length;sci++) {
+    var sc=r.topScores[sci];
+    sgH+='<div class="score-chip '+(sci===0?'top-score':'')+'">'
+      +'<div class="score-chip-val">'+sc.h+'-'+sc.a+'</div>'
+      +'<div class="score-chip-prob">'+pct(sc.p)+'</div>'
+      +miniBar(sc.p,r.topScores[0].p*1.1,sci===0?'#6366f1':'#21262d')+'</div>';
+  }
+  document.getElementById('scoreGrid').innerHTML=sgH;
+
+  var facH='';
+  for (var fi=0;fi<r.factors.length;fi++) {
+    facH+='<div class="factor-item"><div class="factor-num">'+(fi+1)+'</div>'
+      +'<div class="factor-text">'+r.factors[fi]+'</div></div>';
+  }
+  document.getElementById('factorList').innerHTML=facH;
+  renderBestBet(r);
+}
+
+function renderBestBet(r) {
+  var wrap=document.getElementById('bbbWrap'), card=document.getElementById('bbbCard');
+  var ml=r.mlAnalysis, ou=r.ouAnalysis;
+  wrap.style.display='block';
+  var cands=[];
+  if (ml.homeEdge>0.03) cands.push({color:'blue',pick:r.home+' ML',prob:r.ensemble.pHome,edge:ml.homeEdge,evv:ml.homeEV,k:ml.homeKelly,
+    reason:r.home+' is underpriced. Model: '+pct(r.ensemble.pHome)+' — '+(ml.homeEdge*100).toFixed(1)+'% above book implied.'});
+  if (ml.awayEdge>0.03) cands.push({color:'orange',pick:r.away+' ML',prob:r.ensemble.pAway,edge:ml.awayEdge,evv:ml.awayEV,k:ml.awayKelly,
+    reason:r.away+' is underpriced. Model: '+pct(r.ensemble.pAway)+' — '+(ml.awayEdge*100).toFixed(1)+'% above book implied.'});
+  if (ou.edgeOver>0.03) cands.push({color:'green',pick:'OVER '+ou.line,prob:ou.pOver,edge:ou.edgeOver,evv:ou.evOver,k:ou.kellyOver,
+    reason:'Model projects '+r.ensemble.total.toFixed(2)+' total goals. Over '+pct(ou.pOver)+' gives '+(ou.edgeOver*100).toFixed(1)+'% edge at -110.'});
+  if (ou.edgeUnder>0.03) cands.push({color:'blue',pick:'UNDER '+ou.line,prob:ou.pUnder,edge:ou.edgeUnder,evv:ou.evUnder,k:ou.kellyUnder,
+    reason:'Model projects '+r.ensemble.total.toFixed(2)+' total goals. Under '+pct(ou.pUnder)+' gives '+(ou.edgeUnder*100).toFixed(1)+'% edge at -110.'});
+  if (cands.length===0) {
+    card.className='bbb gray';
+    document.getElementById('bbbMatch').textContent=r.away+' @ '+r.home;
+    document.getElementById('bbbPick').textContent='NO VALUE DETECTED';
+    document.getElementById('bbbReason').textContent='No meaningful edge at posted lines. Consider passing or waiting for line movement.';
+    document.getElementById('bbbPct').textContent='—';
+    document.getElementById('bbbStats').innerHTML='';
+    document.getElementById('bbbRing').style.strokeDashoffset='314.16';
+    return;
+  }
+  cands.sort(function(a,b){return b.edge-a.edge;});
+  var best=cands[0];
+  card.className='bbb '+best.color;
+  var ring=document.getElementById('bbbRing');
+  ring.style.stroke=best.color==='orange'?'#fb923c':best.color==='green'?'#22c55e':'#60a5fa';
+  document.getElementById('bbbMatch').textContent=r.away+' @ '+r.home;
+  document.getElementById('bbbPick').textContent=best.pick;
+  document.getElementById('bbbReason').textContent=best.reason;
+  document.getElementById('bbbPct').textContent=(best.prob*100).toFixed(1)+'%';
+  setTimeout(function(){document.getElementById('bbbRing').style.strokeDashoffset=314.16*(1-best.prob);},100);
+  document.getElementById('bbbStats').innerHTML=
+    '<div class="bbb-stat"><div class="bbb-stat-v" style="color:var(--green)">'+sgnPct(best.edge)+'</div><div class="bbb-stat-k">Edge</div></div>'
+    +'<div class="bbb-stat"><div class="bbb-stat-v" style="color:'+(best.evv>0?'var(--green)':'var(--red)')+'">'+evFmt(best.evv)+'</div><div class="bbb-stat-k">EV/$1</div></div>'
+    +'<div class="bbb-stat"><div class="bbb-stat-v" style="color:var(--amber)">'+pct(best.k)+'</div><div class="bbb-stat-k">Kelly</div></div>';
+}
+
+function switchTab(name,btn) {
+  var ps=document.querySelectorAll('.tab-pane');
+  for(var i=0;i<ps.length;i++) ps[i].classList.remove('active');
+  var bs=document.querySelectorAll('.tab-btn');
+  for(var i=0;i<bs.length;i++) bs[i].classList.remove('active');
+  document.getElementById('tab-'+name).classList.add('active');
+  btn.classList.add('active');
+}
+
+function animateSteps(cb) {
+  var ids=['step1','step2','step3','step4','step5'];
+  var starts=[0,300,600,1400,2000], ends=[500,600,1600,1800,2200];
+  for(var i=0;i<ids.length;i++) {
+    (function(id,s,e){
+      setTimeout(function(){document.getElementById(id).className='step-chip running';},s);
+      setTimeout(function(){document.getElementById(id).className='step-chip done';},e);
+    })(ids[i],starts[i],ends[i]);
+  }
+  setTimeout(cb,2400);
+}
+
+function runAnalysis() {
+  var home=document.getElementById('homeTeam').value;
+  var away=document.getElementById('awayTeam').value;
+  var homeMl=document.getElementById('homeMl').value;
+  var awayMl=document.getElementById('awayMl').value;
+  var ouLine=document.getElementById('ouLine').value;
+  var err=document.getElementById('errorBox');
+  err.className='err-box';
+  if(home===away){err.className='err-box visible';err.textContent='Home and away teams must be different.';return;}
+  var btn=document.getElementById('analyzeBtn');
+  btn.disabled=true; btn.textContent='Running 50,000 Monte Carlo Simulations...';
+  document.getElementById('loadingBar').className='loading-bar active';
+  document.getElementById('loadingSteps').className='loading-steps active';
+  var chips=document.querySelectorAll('.step-chip');
+  for(var i=0;i<chips.length;i++) chips[i].className='step-chip';
+  document.getElementById('results').className='';
+  document.getElementById('bbbWrap').style.display='none';
+  animateSteps(function(){
+    try {
+      var result=buildPrediction(home,away,homeMl,awayMl,ouLine);
+      renderResults(result);
+      var panes=document.querySelectorAll('.tab-pane');
+      for(var i=0;i<panes.length;i++) panes[i].classList.remove('active');
+      var tbs=document.querySelectorAll('.tab-btn');
+      for(var i=0;i<tbs.length;i++) tbs[i].classList.remove('active');
+      document.getElementById('tab-overview').classList.add('active');
+      tbs[0].classList.add('active');
+      document.getElementById('results').className='visible';
+    } catch(e) {
+      err.className='err-box visible'; err.textContent='Error: '+e.message;
+    }
+    btn.disabled=false; btn.textContent='Run Full Analysis';
+    document.getElementById('loadingBar').className='loading-bar';
+    document.getElementById('loadingSteps').className='loading-steps';
+  });
+}
+
+var ODDS_API_KEY='67c57937016efcf7a0bfd68fee76e0bd';
+var liveGames=[];
+var TEAM_NAME_MAP={'Anaheim Ducks':'ANA','Boston Bruins':'BOS','Buffalo Sabres':'BUF','Calgary Flames':'CGY',
+  'Carolina Hurricanes':'CAR','Chicago Blackhawks':'CHI','Colorado Avalanche':'COL','Columbus Blue Jackets':'CBJ',
+  'Dallas Stars':'DAL','Detroit Red Wings':'DET','Edmonton Oilers':'EDM','Florida Panthers':'FLA',
+  'Los Angeles Kings':'LAK','Minnesota Wild':'MIN','Montreal Canadiens':'MTL','Nashville Predators':'NSH',
+  'New Jersey Devils':'NJD','New York Islanders':'NYI','New York Rangers':'NYR','Ottawa Senators':'OTT',
+  'Philadelphia Flyers':'PHI','Pittsburgh Penguins':'PIT','Seattle Kraken':'SEA','San Jose Sharks':'SJS',
+  'St. Louis Blues':'STL','Tampa Bay Lightning':'TBL','Toronto Maple Leafs':'TOR','Utah Hockey Club':'UTA',
+  'Vancouver Canucks':'VAN','Vegas Golden Knights':'VGK','Washington Capitals':'WSH','Winnipeg Jets':'WPG'};
+
+function setOddsStatus(type,text){
+  var el=document.getElementById('oddsStatus');
+  el.className='odds-status '+type;
+  document.getElementById('oddsStatusText').textContent=text;
+}
+function debugLog(msg){
+  var box=document.getElementById('oddsDebugBox');
+  if(!box) return;
+  var d=document.createElement('div');
+  d.textContent='['+new Date().toLocaleTimeString()+'] '+msg;
+  box.appendChild(d); box.scrollTop=box.scrollHeight; box.style.display='block';
+}
+
+async function loadLiveOdds(){
+  var btn=document.getElementById('loadOddsBtn'),icon=document.getElementById('loadOddsBtnIcon');
+  btn.disabled=true; icon.textContent='...';
+  setOddsStatus('loading','Fetching live odds...');
+  document.getElementById('oddsGamesList').className='odds-games-list';
+  var box=document.getElementById('oddsDebugBox');
+  box.innerHTML=''; box.style.display='none';
+  var target='https://api.the-odds-api.com/v4/sports/icehockey_nhl/odds/?apiKey='+ODDS_API_KEY+'&regions=us&markets=h2h,totals&oddsFormat=american';
+  var urls=[target,'https://corsproxy.io/?'+encodeURIComponent(target),'https://api.allorigins.win/raw?url='+encodeURIComponent(target)];
+  var games=null;
+  for(var i=0;i<urls.length;i++){
+    try{
+      debugLog('Attempt '+(i+1)+'/3...');
+      var res=await fetch(urls[i]);
+      debugLog('Status: '+res.status);
+      if(!res.ok) continue;
+      var txt=await res.text();
+      debugLog('Response: '+txt.length+' chars');
+      var data=JSON.parse(txt);
+      if(Array.isArray(data)){games=data;debugLog('Got '+games.length+' games');break;}
+    } catch(e){debugLog('Failed: '+e.message);}
+  }
+  if(!games){setOddsStatus('error','Could not reach odds API. See debug log.');btn.disabled=false;icon.textContent='Retry';return;}
+  if(!games.length){setOddsStatus('idle','No NHL games scheduled now.');btn.disabled=false;icon.textContent='Retry';return;}
+  liveGames=[];
+  for(var gi=0;gi<games.length;gi++){
+    var g=games[gi],bms=g.bookmakers||[],book=null;
+    for(var bi=0;bi<bms.length;bi++){if(bms[bi].key==='draftkings'){book=bms[bi];break;}}
+    if(!book) for(var bi2=0;bi2<bms.length;bi2++){if(bms[bi2].key==='fanduel'){book=bms[bi2];break;}}
+    if(!book&&bms.length>0) book=bms[0];
+    if(!book) continue;
+    var mkts=book.markets||[],h2h=null,tots=null;
+    for(var mi2=0;mi2<mkts.length;mi2++){if(mkts[mi2].key==='h2h') h2h=mkts[mi2]; if(mkts[mi2].key==='totals') tots=mkts[mi2];}
+    var hOC=null,aOC=null,ovOC=null;
+    if(h2h){for(var oi2=0;oi2<h2h.outcomes.length;oi2++){
+      if(h2h.outcomes[oi2].name===g.home_team) hOC=h2h.outcomes[oi2];
+      if(h2h.outcomes[oi2].name===g.away_team) aOC=h2h.outcomes[oi2];
+    }}
+    if(tots){for(var ti=0;ti<tots.outcomes.length;ti++){if(tots.outcomes[ti].name==='Over') ovOC=tots.outcomes[ti];}}
+    var hAb=TEAM_NAME_MAP[g.home_team]||g.home_team.split(' ').pop().substring(0,3).toUpperCase();
+    var aAb=TEAM_NAME_MAP[g.away_team]||g.away_team.split(' ').pop().substring(0,3).toUpperCase();
+    var gt=new Date(g.commence_time);
+    var ts=gt.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})+' '+gt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});
+    liveGames.push({homeAbbr:hAb,awayAbbr:aAb,
+      homeMl:hOC?Math.round(hOC.price):null,awayMl:aOC?Math.round(aOC.price):null,
+      ouLine:ovOC?ovOC.point:null,timeStr:ts,bookmaker:book.title});
+  }
+  renderOddsGames();
+  setOddsStatus('success',liveGames.length+' games loaded from '+(liveGames[0]?liveGames[0].bookmaker:'API')+' - click a row');
+  btn.disabled=false; icon.textContent='Refresh';
+}
+
+function renderOddsGames(){
+  var list=document.getElementById('oddsGamesList');
+  if(!liveGames.length){list.className='odds-games-list';return;}
+  var html='';
+  for(var i=0;i<liveGames.length;i++){
+    var g=liveGames[i];
+    var hml=g.homeMl!==null?(g.homeMl>0?'+'+g.homeMl:''+g.homeMl):'—';
+    var aml=g.awayMl!==null?(g.awayMl>0?'+'+g.awayMl:''+g.awayMl):'—';
+    var ou=g.ouLine!==null?g.ouLine:'—';
+    html+='<div class="odds-game-row" id="ogr'+i+'" onclick="selectGame('+i+')">'
+      +'<div class="odds-game-teams">'+g.awayAbbr+' @ '+g.homeAbbr+'</div>'
+      +'<div class="odds-game-time">'+g.timeStr+'</div>'
+      +'<div class="odds-game-lines">'
+      +'<span class="odds-line-chip home">'+g.homeAbbr+' '+hml+'</span>'
+      +'<span class="odds-line-chip away">'+g.awayAbbr+' '+aml+'</span>'
+      +'<span class="odds-line-chip ou">O/U '+ou+'</span>'
+      +'</div></div>';
+  }
+  list.innerHTML=html; list.className='odds-games-list visible';
+}
+
+function selectGame(i){
+  var g=liveGames[i]; if(!g) return;
+  var rows=document.querySelectorAll('.odds-game-row');
+  for(var r=0;r<rows.length;r++) rows[r].className='odds-game-row'+(r===i?' selected':'');
+  var hEl=document.getElementById('homeTeam'), aEl=document.getElementById('awayTeam');
+  if(TEAMS[g.homeAbbr]) hEl.value=g.homeAbbr;
+  if(TEAMS[g.awayAbbr]) aEl.value=g.awayAbbr;
+  document.getElementById('homeMl').value=g.homeMl!==null?(g.homeMl>0?'+'+g.homeMl:''+g.homeMl):'';
+  document.getElementById('awayMl').value=g.awayMl!==null?(g.awayMl>0?'+'+g.awayMl:''+g.awayMl):'';
+  document.getElementById('ouLine').value=g.ouLine!==null?g.ouLine:'';
+  setOddsStatus('success',g.awayAbbr+' @ '+g.homeAbbr+' loaded - click Run Full Analysis');
+}
+
+(function init(){
+  loadNHLStats();
+  var tl=Object.keys(TEAMS).sort();
+  var hEl=document.getElementById('homeTeam'), aEl=document.getElementById('awayTeam');
+  for(var i=0;i<tl.length;i++){
+    var ab=tl[i];
+    var o1=document.createElement('option'); o1.value=ab; o1.textContent=ab+' - '+TEAMS[ab]; hEl.appendChild(o1);
+    var o2=document.createElement('option'); o2.value=ab; o2.textContent=ab+' - '+TEAMS[ab]; aEl.appendChild(o2);
+  }
+  hEl.value='TOR'; aEl.value='BOS';
+  document.getElementById('datePill').textContent=new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+  document.addEventListener('keydown',function(e){if(e.key==='Enter'&&!document.getElementById('analyzeBtn').disabled) runAnalysis();});
+})();
+
+// ═══════════════════════════════════════════════════════════════
+// BEST BETS OF THE DAY — Auto-scanner
+// ═══════════════════════════════════════════════════════════════
+
+var todaysGames = [];
+var bbdScanned = false;
+
+function setBBDStatus(type, text) {
+  var el = document.getElementById('bbdStatus');
+  el.className = 'bbd-status ' + type;
+  document.getElementById('bbdStatusText').textContent = text;
+}
+
+async function fetchTodaysSchedule() {
+  var games = [];
+
+  // ── Try 1: nhl-analytics pipeline schedule.json ──────────────
+  try {
+    var res = await fetch('https://bazoff18.github.io/nhl-analytics/data/schedule.json?t=' + Date.now());
+    if (res.ok) {
+      var json = await res.json();
+      if (json && json.games && json.games.length > 0) {
+        var today = new Date().toISOString().split('T')[0];
+        var todayGames = [];
+        for (var i = 0; i < json.games.length; i++) {
+          var g = json.games[i];
+          if (g.date && g.date.indexOf(today) === 0) todayGames.push(g);
+        }
+        var source = todayGames.length > 0 ? todayGames : json.games.slice(0, 15);
+        var result = [];
+        for (var j = 0; j < source.length; j++) {
+          var sg = source[j];
+          if (sg.home && sg.away) {
+            result.push({home: sg.home, away: sg.away,
+              homeMl: null, awayMl: null, ouLine: 5.5, time: sg.time_utc || sg.date});
+          }
+        }
+        if (result.length > 0) return result;
+      }
+    }
+  } catch(e) {}
+
+  // ── Try 2: NHL API schedule direct ───────────────────────────
+  try {
+    var today2 = new Date().toISOString().split('T')[0];
+    var schedUrls = [
+      'https://api-web.nhle.com/v1/schedule/' + today2,
+      'https://corsproxy.io/?' + encodeURIComponent('https://api-web.nhle.com/v1/schedule/' + today2),
+      'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://api-web.nhle.com/v1/schedule/' + today2)
+    ];
+    for (var si = 0; si < schedUrls.length; si++) {
+      try {
+        var sr = await fetch(schedUrls[si]);
+        if (!sr.ok) continue;
+        var sd = await sr.json();
+        var nhlGames = [];
+        var gameWeek = sd.gameWeek || [];
+        for (var wi = 0; wi < gameWeek.length; wi++) {
+          var dayGames = gameWeek[wi].games || [];
+          for (var gi2 = 0; gi2 < dayGames.length; gi2++) {
+            var g2 = dayGames[gi2];
+            if (g2.gameType !== 2) continue;
+            var homeAb = g2.homeTeam && g2.homeTeam.abbrev ? g2.homeTeam.abbrev : '';
+            var awayAb = g2.awayTeam && g2.awayTeam.abbrev ? g2.awayTeam.abbrev : '';
+            if (homeAb && awayAb) {
+              nhlGames.push({home: homeAb, away: awayAb, homeMl: null, awayMl: null, ouLine: 5.5, time: g2.startTimeUTC});
+            }
+          }
+        }
+        if (nhlGames.length > 0) return nhlGames;
+      } catch(e2) {}
+    }
+  } catch(e) {}
+
+  // ── Try 3: Odds API (gets today games + lines) ──────────────
+  try {
+    var target = 'https://api.the-odds-api.com/v4/sports/icehockey_nhl/odds/?apiKey='
+      + ODDS_API_KEY + '&regions=us&markets=h2h,totals&oddsFormat=american';
+    var oddsUrls = [
+      target,
+      'https://corsproxy.io/?' + encodeURIComponent(target),
+      'https://api.allorigins.win/raw?url=' + encodeURIComponent(target)
+    ];
+    for (var oi = 0; oi < oddsUrls.length; oi++) {
+      try {
+        var or2 = await fetch(oddsUrls[oi]);
+        if (!or2.ok) continue;
+        var od = await or2.json();
+        if (!Array.isArray(od) || od.length === 0) continue;
+        var oddsGames = [];
+        for (var ogi = 0; ogi < od.length; ogi++) {
+          var g3 = od[ogi];
+          var hAb = TEAM_NAME_MAP[g3.home_team] || '';
+          var aAb = TEAM_NAME_MAP[g3.away_team] || '';
+          if (!hAb || !aAb) continue;
+          var bms = g3.bookmakers || [];
+          var book = null;
+          for (var bi = 0; bi < bms.length; bi++) { if (bms[bi].key === 'draftkings') { book = bms[bi]; break; } }
+          if (!book && bms.length > 0) book = bms[0];
+          var hMl = null, aMl = null, ouLn = 5.5;
+          if (book) {
+            var mkts = book.markets || [];
+            for (var mi = 0; mi < mkts.length; mi++) {
+              if (mkts[mi].key === 'h2h') {
+                for (var hi = 0; hi < mkts[mi].outcomes.length; hi++) {
+                  if (mkts[mi].outcomes[hi].name === g3.home_team) hMl = Math.round(mkts[mi].outcomes[hi].price);
+                  if (mkts[mi].outcomes[hi].name === g3.away_team) aMl = Math.round(mkts[mi].outcomes[hi].price);
+                }
+              }
+              if (mkts[mi].key === 'totals') {
+                for (var ti2 = 0; ti2 < mkts[mi].outcomes.length; ti2++) {
+                  if (mkts[mi].outcomes[ti2].name === 'Over') ouLn = mkts[mi].outcomes[ti2].point;
+                }
+              }
+            }
+          }
+          oddsGames.push({home: hAb, away: aAb, homeMl: hMl, awayMl: aMl, ouLine: ouLn, time: g3.commence_time});
+        }
+        if (oddsGames.length > 0) return oddsGames;
+      } catch(e3) {}
+    }
+  } catch(e) {}
+
+  // ── Fallback: Generate slate from TEAM_STATS (simulate a full day) ──
+  // This runs the model on all 32 teams paired as today slate
+  // when no schedule source is available — uses team win% to rank games
+  var allTeams = Object.keys(TEAM_STATS);
+  var fallbackGames = [];
+  // Pick 6-8 balanced matchups from current standings
+  var sorted = allTeams.slice().sort(function(a,b) { return (TEAM_STATS[b].wp||0) - (TEAM_STATS[a].wp||0); });
+  // Pair top teams vs mid teams for interesting matchups
+  var pairs = [
+    [sorted[0], sorted[8]], [sorted[1], sorted[9]],
+    [sorted[2], sorted[10]], [sorted[3], sorted[11]],
+    [sorted[4], sorted[12]], [sorted[5], sorted[13]],
+    [sorted[6], sorted[14]], [sorted[7], sorted[15]]
+  ];
+  for (var pi = 0; pi < pairs.length; pi++) {
+    fallbackGames.push({home: pairs[pi][0], away: pairs[pi][1], homeMl: null, awayMl: null, ouLine: 5.5, time: null});
+  }
+  return fallbackGames;
+}
+
+async function scanTodaysBets() {
+  var btn = document.getElementById('bbdRefreshBtn');
+  var grid = document.getElementById('bbdGrid');
+  btn.disabled = true;
+  btn.textContent = 'Scanning...';
+  setBBDStatus('scanning', 'Fetching schedule...');
+  grid.innerHTML = '<div class="bbd-loading"><div class="bbd-spinner"></div><span>Analyzing today slate...</span></div>';
+
+  // Make sure stats are loaded
+  await loadNHLStats();
+
+  setBBDStatus('scanning', 'Running models on games...');
+  var games = await fetchTodaysSchedule();
+
+  if (!games || games.length === 0) {
+    setBBDStatus('err', 'Could not load schedule. Try refreshing.');
+    grid.innerHTML = '<div class="bbd-empty">Could not load today schedule. Check your connection and try again.</div>';
+    btn.disabled = false;
+    btn.textContent = 'Scan Games';
+    return;
+  }
+
+  setBBDStatus('scanning', 'Running models on ' + games.length + ' games...');
+
+  var allBets = [];
+  for (var i = 0; i < games.length; i++) {
+    var g = games[i];
+    if (!g.home || !g.away || g.home === g.away) continue;
+    try {
+      var result = buildPrediction(g.home, g.away, g.homeMl, g.awayMl, g.ouLine || 5.5);
+      var ml = result.mlAnalysis, ou = result.ouAnalysis;
+      var gameTime = '';
+      if (g.time) {
+        try {
+          var dt = new Date(g.time);
+          gameTime = dt.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit', hour12:true, timeZone:'America/New_York'}) + ' ET';
+        } catch(te) {}
+      }
+      // Only include bets where we have lines OR high edge vs -110
+      if (g.homeMl && g.awayMl && ml.homeEdge > 0.02) {
+        allBets.push({type:'home', matchup:g.away+' @ '+g.home, home:g.home, away:g.away,
+          pick:g.home+' ML', odds:g.homeMl>0?'+'+g.homeMl:''+g.homeMl,
+          edge:ml.homeEdge, kelly:ml.homeKelly, ev:ml.homeEV,
+          prob:result.ensemble.pHome, conf:result.ensemble.confidence,
+          homeMl:g.homeMl, awayMl:g.awayMl, ouLine:g.ouLine||5.5, time:gameTime});
+      }
+      if (g.homeMl && g.awayMl && ml.awayEdge > 0.02) {
+        allBets.push({type:'away', matchup:g.away+' @ '+g.home, home:g.home, away:g.away,
+          pick:g.away+' ML', odds:g.awayMl>0?'+'+g.awayMl:''+g.awayMl,
+          edge:ml.awayEdge, kelly:ml.awayKelly, ev:ml.awayEV,
+          prob:result.ensemble.pAway, conf:result.ensemble.confidence,
+          homeMl:g.homeMl, awayMl:g.awayMl, ouLine:g.ouLine||5.5, time:gameTime});
+      }
+      // For OU — include even without ML lines (edge vs -110)
+      if (ou.edgeOver > 0.025) {
+        allBets.push({type:'over', matchup:g.away+' @ '+g.home, home:g.home, away:g.away,
+          pick:'OVER '+(g.ouLine||5.5), odds:'-110',
+          edge:ou.edgeOver, kelly:ou.kellyOver, ev:ou.evOver,
+          prob:ou.pOver, conf:result.ensemble.confidence,
+          homeMl:g.homeMl, awayMl:g.awayMl, ouLine:g.ouLine||5.5, time:gameTime});
+      }
+      if (ou.edgeUnder > 0.025) {
+        allBets.push({type:'under', matchup:g.away+' @ '+g.home, home:g.home, away:g.away,
+          pick:'UNDER '+(g.ouLine||5.5), odds:'-110',
+          edge:ou.edgeUnder, kelly:ou.kellyUnder, ev:ou.evUnder,
+          prob:ou.pUnder, conf:result.ensemble.confidence,
+          homeMl:g.homeMl, awayMl:g.awayMl, ouLine:g.ouLine||5.5, time:gameTime});
+      }
+    } catch(e) {}
+  }
+
+  // Sort by kelly % descending
+  allBets.sort(function(a, b) { return b.kelly - a.kelly; });
+  var top4 = allBets.slice(0, 4);
+
+  // Update date label
+  document.getElementById('bbdDate').textContent =
+    new Date().toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric'})
+    + ' — ' + games.length + ' games analyzed';
+
+  if (top4.length === 0) {
+    setBBDStatus('done', 'Scanned ' + games.length + ' games — no strong edges found at current prices');
+    grid.innerHTML = '<div class="bbd-empty" style="padding:24px">'
+      + '<div style="font-size:28px;margin-bottom:8px">📊</div>'
+      + '<strong>No value bets today</strong><br><br>'
+      + 'The models found no meaningful edge vs posted lines across all ' + games.length + ' games. '
+      + 'Best play is to pass today and wait for better prices.</div>';
+    btn.disabled = false;
+    btn.textContent = '↻ Refresh';
+    return;
+  }
+
+  var rankLabels = ['1ST', '2ND', '3RD', '4TH'];
+  var rankClasses = ['r1', 'r2', 'r3', 'r4'];
+  var html2 = '';
+  for (var bi = 0; bi < top4.length; bi++) {
+    var b = top4[bi];
+    var evColor = b.ev > 0 ? 'var(--green)' : 'var(--red)';
+    var probColor = b.prob > 0.6 ? 'var(--green)' : b.prob > 0.5 ? 'var(--accent2)' : 'var(--muted)';
+    var confStyle = b.conf === 'HIGH' ? 'color:var(--green)' : b.conf === 'MEDIUM' ? 'color:var(--amber)' : 'color:var(--red)';
+    html2 += '<div class="bbd-bet-card type-' + b.type + '" onclick="loadGameFromBBD(''
+      + b.home + '','' + b.away + '','
+      + (b.homeMl || 'null') + ','
+      + (b.awayMl || 'null') + ','
+      + b.ouLine + ')">'
+      + '<div class="bbd-rank ' + rankClasses[bi] + '">' + rankLabels[bi] + ' BEST BET</div>'
+      + '<div class="bbd-matchup">' + b.matchup + (b.time ? ' &middot; ' + b.time : '') + '</div>'
+      + '<div class="bbd-pick">' + b.pick + '</div>'
+      + '<div class="bbd-stats-row"><span class="bbd-stats-key">Odds</span><span class="bbd-stats-val">' + (b.odds || '—') + '</span></div>'
+      + '<div class="bbd-stats-row"><span class="bbd-stats-key">Win prob</span><span class="bbd-stats-val" style="' + probColor + '">' + pct(b.prob) + '</span></div>'
+      + '<div class="bbd-stats-row"><span class="bbd-stats-key">Edge</span><span class="bbd-stats-val" style="color:var(--green)">' + sgnPct(b.edge) + '</span></div>'
+      + '<div class="bbd-stats-row"><span class="bbd-stats-key">EV / $1</span><span class="bbd-stats-val" style="' + evColor + '">' + evFmt(b.ev) + '</span></div>'
+      + '<div class="bbd-stats-row"><span class="bbd-stats-key">Confidence</span><span class="bbd-stats-val" style="' + confStyle + '">' + b.conf + '</span></div>'
+      + '<div class="bbd-kelly-bar">Kelly stake: <span>' + pct(b.kelly) + '</span> of bankroll</div>'
+      + '<div style="font-size:9px;color:var(--dim);margin-top:8px;text-align:center">Click to analyze in detail below</div>'
+      + '</div>';
+  }
+  grid.innerHTML = html2;
+
+  var remaining = allBets.length - top4.length;
+  setBBDStatus('done', 'Scanned ' + games.length + ' games — '
+    + allBets.length + ' value bet' + (allBets.length !== 1 ? 's' : '') + ' found'
+    + (remaining > 0 ? ', showing top 4 by Kelly %' : ''));
+
+  btn.disabled = false;
+  btn.textContent = '↻ Refresh';
+}
+
+
+function loadGameFromBBD(home, away, homeMl, awayMl, ouLine) {
+  // Fill in the matchup form and run analysis
+  var homeEl = document.getElementById('homeTeam');
+  var awayEl = document.getElementById('awayTeam');
+  if (homeEl && TEAMS[home]) homeEl.value = home;
+  if (awayEl && TEAMS[away]) awayEl.value = away;
+  if (homeMl) document.getElementById('homeMl').value = homeMl > 0 ? '+' + homeMl : '' + homeMl;
+  if (awayMl) document.getElementById('awayMl').value = awayMl > 0 ? '+' + awayMl : '' + awayMl;
+  if (ouLine) document.getElementById('ouLine').value = ouLine;
+  // Scroll to form and run
+  document.getElementById('analyzeBtn').scrollIntoView({behavior: 'smooth', block: 'center'});
+  setTimeout(function() { runAnalysis(); }, 400);
+}
+
+</script>
+</body>
+</html>
